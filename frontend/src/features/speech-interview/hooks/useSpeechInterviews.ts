@@ -16,6 +16,12 @@ export function useSpeechInterview(sessionId: number | null, pollingEnabled = fa
     queryKey: ["speechInterview", sessionId],
     queryFn: () => getSpeechInterview(sessionId!),
     enabled: sessionId !== null,
-    refetchInterval: pollingEnabled ? 10_000 : false,
+    refetchInterval: (query) => {
+      if (!pollingEnabled) return false;
+      const data = query.state.data;
+      const hasPending = (data?.questions ?? []).some((q) => q.answer?.feedbackStatus === "PENDING");
+      return hasPending ? 10_000 : false;
+    },
+    refetchIntervalInBackground: false,
   });
 }

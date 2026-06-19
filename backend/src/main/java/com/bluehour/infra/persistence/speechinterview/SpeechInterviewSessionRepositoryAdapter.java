@@ -4,6 +4,7 @@ import com.bluehour.domain.speechinterview.model.SpeechInterviewSession;
 import com.bluehour.domain.speechinterview.port.SpeechInterviewSessionRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,5 +30,10 @@ public class SpeechInterviewSessionRepositoryAdapter implements SpeechInterviewS
     @Override
     public List<SpeechInterviewSession> findByMemberIdOrderByCreatedAtDesc(Long memberId) {
         return repo.findAllByMemberIdOrderByCreatedAtDesc(memberId);
+    }
+
+    @Override
+    public List<SpeechInterviewSession> findWithStalePendingAnswers(LocalDateTime cutoff) {
+        return repo.findWithStalePendingAnswers(cutoff);
     }
 }
