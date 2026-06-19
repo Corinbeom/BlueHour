@@ -85,4 +85,12 @@ export async function updateRecruitmentEntry(input: {
   return res.data;
 }
 
+export async function deleteRecruitmentEntry(id: number) {
+  const res = await apiFetch<ApiResponse<void>>(`/api/recruitment-entries/${id}`, {
+    method: "DELETE",
+  });
 
+  if (!res.success) {
+    throw new Error(res.error?.message ?? "지원 삭제에 실패했습니다.");
+  }
+}
