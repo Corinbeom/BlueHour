@@ -27,6 +27,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail("UNAUTHORIZED", e.getMessage()));
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiResponse<Void>> handleForbidden(ForbiddenException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.fail("FORBIDDEN", e.getMessage()));
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotFound(ResourceNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -119,5 +125,4 @@ public class GlobalExceptionHandler {
         return field + ": " + msg + " (rejected=" + rejected + ")";
     }
 }
-
 

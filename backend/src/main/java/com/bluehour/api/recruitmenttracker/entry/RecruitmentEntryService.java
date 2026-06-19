@@ -1,6 +1,7 @@
 package com.bluehour.api.recruitmenttracker.entry;
 
 import com.bluehour.common.ResourceNotFoundException;
+import com.bluehour.common.ForbiddenException;
 import com.bluehour.domain.member.model.Member;
 import com.bluehour.domain.member.port.MemberRepository;
 import com.bluehour.domain.recruitmenttracker.entry.model.PlatformType;
@@ -53,6 +54,13 @@ public class RecruitmentEntryService {
     }
 
     @Transactional(readOnly = true)
+    public RecruitmentEntry get(Long id, Long memberId) {
+        RecruitmentEntry entry = get(id);
+        ensureOwner(entry, memberId);
+        return entry;
+    }
+
+    @Transactional(readOnly = true)
     public List<RecruitmentEntry> listByMember(Long memberId) {
         return recruitmentEntryRepository.findAllByMemberId(memberId);
     }
@@ -67,6 +75,32 @@ public class RecruitmentEntryService {
             LocalDate appliedDate
     ) {
         RecruitmentEntry entry = get(id);
+        return updateEntry(entry, companyName, position, step, platformType, externalId, appliedDate);
+    }
+
+    public RecruitmentEntry update(
+            Long id,
+            Long memberId,
+            String companyName,
+            String position,
+            RecruitmentStep step,
+            PlatformType platformType,
+            String externalId,
+            LocalDate appliedDate
+    ) {
+        RecruitmentEntry entry = get(id, memberId);
+        return updateEntry(entry, companyName, position, step, platformType, externalId, appliedDate);
+    }
+
+    private RecruitmentEntry updateEntry(
+            RecruitmentEntry entry,
+            String companyName,
+            String position,
+            RecruitmentStep step,
+            PlatformType platformType,
+            String externalId,
+            LocalDate appliedDate
+    ) {
         entry.updateApplicationInfo(companyName, position);
         if (step != null) entry.changeStep(step);
         if (externalId != null || platformType != null) {
@@ -82,8 +116,19 @@ public class RecruitmentEntryService {
         return entry;
     }
 
+    public RecruitmentEntry changeStep(Long id, Long memberId, RecruitmentStep step) {
+        RecruitmentEntry entry = get(id, memberId);
+        entry.changeStep(step);
+        return entry;
+    }
+
     public void delete(Long id) {
         RecruitmentEntry entry = get(id);
+        recruitmentEntryRepository.delete(entry);
+    }
+
+    public void delete(Long id, Long memberId) {
+        RecruitmentEntry entry = get(id, memberId);
         recruitmentEntryRepository.delete(entry);
     }
 
@@ -91,6 +136,10 @@ public class RecruitmentEntryService {
     public void onMemberDeleted(MemberDeletedEvent event) {
         listByMember(event.memberId()).forEach(entry -> delete(entry.getId()));
     }
+
+    private void ensureOwner(RecruitmentEntry entry, Long memberId) {
+        if (!entry.getMember().getId().equals(memberId)) {
+            throw new ForbiddenException("지원 항목에 접근할 권한이 없습니다.");
+        }
+    }
 }
-
-

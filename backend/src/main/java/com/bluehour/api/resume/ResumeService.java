@@ -1,6 +1,7 @@
 package com.bluehour.api.resume;
 
 import com.bluehour.common.ResourceNotFoundException;
+import com.bluehour.common.ForbiddenException;
 import com.bluehour.domain.member.model.Member;
 import com.bluehour.domain.member.port.MemberRepository;
 import com.bluehour.domain.resume.model.Resume;
@@ -25,7 +26,7 @@ import java.util.List;
 public class ResumeService {
 
     private static final Logger log = LoggerFactory.getLogger(ResumeService.class);
-    private static final long MAX_FILE_BYTES = 5L * 1024 * 1024;
+    private static final long MAX_FILE_BYTES = 10L * 1024 * 1024;
 
     public record FileData(byte[] bytes, String contentType, String filename) {}
 
@@ -51,7 +52,7 @@ public class ResumeService {
             throw new IllegalArgumentException("파일은 필수입니다.");
         }
         if (file.getSize() > MAX_FILE_BYTES) {
-            throw new IllegalArgumentException("파일 크기는 최대 5MB 입니다.");
+            throw new IllegalArgumentException("파일 크기는 최대 10MB 입니다.");
         }
 
         Member member = memberRepository.findById(memberId)
@@ -95,11 +96,18 @@ public class ResumeService {
     }
 
     @Transactional(readOnly = true)
+    public Resume get(Long memberId, Long id) {
+        Resume resume = get(id);
+        ensureOwner(resume, memberId);
+        return resume;
+    }
+
+    @Transactional(readOnly = true)
     public FileData serveFile(Long memberId, Long resumeId) {
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resume를 찾을 수 없습니다. id=" + resumeId));
         if (!resume.getMember().getId().equals(memberId)) {
-            throw new IllegalArgumentException("본인의 파일만 조회할 수 있습니다.");
+            throw new ForbiddenException("본인의 파일만 조회할 수 있습니다.");
         }
         StoredFileRef stored = resume.getStoredFile();
         if (stored == null || stored.getStorageKey() == null) {
@@ -113,7 +121,7 @@ public class ResumeService {
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resume를 찾을 수 없습니다. id=" + resumeId));
         if (!resume.getMember().getId().equals(memberId)) {
-            throw new IllegalArgumentException("본인의 파일만 삭제할 수 있습니다.");
+            throw new ForbiddenException("본인의 파일만 삭제할 수 있습니다.");
         }
         String storageKey = resume.getStoredFile() != null ? resume.getStoredFile().getStorageKey() : null;
         resumeRepository.delete(resume);
@@ -132,6 +140,12 @@ public class ResumeService {
             return file.getBytes();
         } catch (IOException e) {
             throw new IllegalArgumentException("파일을 읽을 수 없습니다.", e);
+        }
+    }
+
+    private void ensureOwner(Resume resume, Long memberId) {
+        if (!resume.getMember().getId().equals(memberId)) {
+            throw new ForbiddenException("본인의 파일만 조회할 수 있습니다.");
         }
     }
 

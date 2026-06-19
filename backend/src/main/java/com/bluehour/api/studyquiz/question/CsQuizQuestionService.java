@@ -29,7 +29,17 @@ public class CsQuizQuestionService {
     public CsQuizAttempt submitAttempt(Long questionId, CreateCsQuizAttemptRequest req) {
         CsQuizQuestion q = questionRepository.findById(questionId)
                 .orElseThrow(() -> new ResourceNotFoundException("CsQuizQuestion을 찾을 수 없습니다. id=" + questionId));
+        return submitAttempt(q, req);
+    }
 
+    @CacheEvict(value = "stats", allEntries = true)
+    public CsQuizAttempt submitAttempt(Long memberId, Long questionId, CreateCsQuizAttemptRequest req) {
+        CsQuizQuestion q = questionRepository.findByIdAndSessionMemberId(questionId, memberId)
+                .orElseThrow(() -> new ResourceNotFoundException("CsQuizQuestion을 찾을 수 없습니다. id=" + questionId));
+        return submitAttempt(q, req);
+    }
+
+    private CsQuizAttempt submitAttempt(CsQuizQuestion q, CreateCsQuizAttemptRequest req) {
         if (!q.canAttempt()) {
             throw new IllegalArgumentException("최대 답변 횟수(" + CsQuizQuestion.MAX_ATTEMPTS + "회)를 초과했습니다.");
         }
@@ -80,4 +90,3 @@ public class CsQuizQuestionService {
         return attempt;
     }
 }
-

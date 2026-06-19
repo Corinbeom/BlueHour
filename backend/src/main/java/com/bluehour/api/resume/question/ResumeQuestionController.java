@@ -3,6 +3,7 @@ package com.bluehour.api.resume.question;
 import com.bluehour.api.resume.question.dto.CreateResumeFeedbackRequest;
 import com.bluehour.api.resume.question.dto.ResumeFeedbackResponse;
 import com.bluehour.common.ApiResponse;
+import com.bluehour.common.AuthUtils;
 import com.bluehour.domain.resume.session.model.ResumeAnswerAttempt;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,8 +27,8 @@ public class ResumeQuestionController {
             @PathVariable Long id,
             @Valid @RequestBody CreateResumeFeedbackRequest req
     ) {
-        ResumeAnswerAttempt attempt = service.createFeedback(id, req.answerText(), req.behavioralMetrics());
+        Long memberId = AuthUtils.currentMemberId();
+        ResumeAnswerAttempt attempt = service.createFeedback(memberId, id, req.answerText(), req.behavioralMetrics());
         return ApiResponse.success(ResumeFeedbackResponse.from(attempt));
     }
 }
-

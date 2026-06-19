@@ -1,7 +1,7 @@
 package com.bluehour.api.resume.session;
 
 import com.bluehour.common.ResourceNotFoundException;
-import com.bluehour.common.UnauthorizedException;
+import com.bluehour.common.ForbiddenException;
 import com.bluehour.domain.member.model.Member;
 import com.bluehour.domain.member.port.MemberRepository;
 import com.bluehour.domain.resume.model.Resume;
@@ -53,7 +53,7 @@ import java.util.TreeMap;
 @Transactional
 public class ResumeSessionService {
 
-    private static final long MAX_FILE_BYTES = 5L * 1024 * 1024; // 5MB
+    private static final long MAX_FILE_BYTES = 10L * 1024 * 1024;
 
     private final ResumeSessionRepository sessionRepository;
     private final MemberRepository memberRepository;
@@ -148,6 +148,7 @@ public class ResumeSessionService {
 
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resume를 찾을 수 없습니다. id=" + resumeId));
+        ensureResumeOwner(resume, memberId);
         if (resume.getExtractStatus() != ResumeExtractStatus.EXTRACTED) {
             throw new IllegalArgumentException("텍스트 추출이 완료되지 않은 이력서입니다.");
         }
@@ -165,6 +166,7 @@ public class ResumeSessionService {
         if (portfolioResumeId != null) {
             Resume portfolio = resumeRepository.findById(portfolioResumeId)
                     .orElseThrow(() -> new ResourceNotFoundException("Portfolio Resume를 찾을 수 없습니다. id=" + portfolioResumeId));
+            ensureResumeOwner(portfolio, memberId);
             if (portfolio.getExtractStatus() == ResumeExtractStatus.EXTRACTED) {
                 portfolioRef = portfolio.getStoredFile();
                 portfolioText = portfolio.getExtractedText();
@@ -200,6 +202,12 @@ public class ResumeSessionService {
     public ResumeSessionResponse getResponse(Long id) {
         ResumeSession session = sessionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ResumeSession을 찾을 수 없습니다. id=" + id));
+        return ResumeSessionResponse.from(session);
+    }
+
+    @Transactional(readOnly = true)
+    public ResumeSessionResponse getResponse(Long id, Long memberId) {
+        ResumeSession session = findAndAuthorize(id, memberId);
         return ResumeSessionResponse.from(session);
     }
 
@@ -345,7 +353,7 @@ public class ResumeSessionService {
         ResumeSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("ResumeSession을 찾을 수 없습니다. id=" + sessionId));
         if (!session.getMember().getId().equals(memberId)) {
-            throw new UnauthorizedException("세션에 접근할 권한이 없습니다.");
+            throw new ForbiddenException("세션에 접근할 권한이 없습니다.");
         }
         if (session.getReportJson() != null && !session.getReportJson().isBlank()) {
             return parseReport(session.getReportJson());
@@ -371,7 +379,7 @@ public class ResumeSessionService {
         ResumeSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("ResumeSession을 찾을 수 없습니다. id=" + sessionId));
         if (!session.getMember().getId().equals(memberId)) {
-            throw new UnauthorizedException("세션에 접근할 권한이 없습니다.");
+            throw new ForbiddenException("세션에 접근할 권한이 없습니다.");
         }
         if (session.getReportJson() == null || session.getReportJson().isBlank()) {
             throw new ResourceNotFoundException("아직 생성된 리포트가 없습니다. sessionId=" + sessionId);
@@ -517,7 +525,7 @@ public class ResumeSessionService {
         Resume resume = resumeRepository.findById(request.resumeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Resume를 찾을 수 없습니다. id=" + request.resumeId()));
         if (!resume.getMember().getId().equals(memberId)) {
-            throw new UnauthorizedException("해당 이력서에 접근할 권한이 없습니다.");
+            throw new ForbiddenException("해당 이력서에 접근할 권한이 없습니다.");
         }
         if (resume.getExtractStatus() != ResumeExtractStatus.EXTRACTED || resume.getExtractedText() == null) {
             throw new IllegalArgumentException("텍스트 추출이 완료되지 않은 이력서입니다. id=" + request.resumeId());
@@ -529,6 +537,7 @@ public class ResumeSessionService {
         if (request.portfolioResumeId() != null) {
             Resume portfolio = resumeRepository.findById(request.portfolioResumeId())
                     .orElseThrow(() -> new ResourceNotFoundException("Portfolio Resume를 찾을 수 없습니다. id=" + request.portfolioResumeId()));
+            ensureResumeOwner(portfolio, memberId);
             if (portfolio.getExtractStatus() == ResumeExtractStatus.EXTRACTED && portfolio.getExtractedText() != null) {
                 portfolioText = portfolio.getExtractedText();
             }
@@ -554,11 +563,17 @@ public class ResumeSessionService {
     }
 
     @CacheEvict(value = {"resumeSessions", "resumeInterviewStats"}, allEntries = true)
+    public void delete(Long id, Long memberId) {
+        findAndAuthorize(id, memberId);
+        sessionRepository.deleteById(id);
+    }
+
+    @CacheEvict(value = {"resumeSessions", "resumeInterviewStats"}, allEntries = true)
     public ResumeSessionResponse complete(Long sessionId, Long memberId) {
         ResumeSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("ResumeSession을 찾을 수 없습니다. id=" + sessionId));
         if (!session.getMember().getId().equals(memberId)) {
-            throw new UnauthorizedException("세션에 접근할 권한이 없습니다.");
+            throw new ForbiddenException("세션에 접근할 권한이 없습니다.");
         }
         session.markCompleted();
         sessionRepository.save(session);
@@ -567,7 +582,7 @@ public class ResumeSessionService {
 
     private static void validateSize(MultipartFile file) {
         if (file.getSize() > MAX_FILE_BYTES) {
-            throw new IllegalArgumentException("파일 크기는 최대 5MB 입니다. filename=" + file.getOriginalFilename());
+            throw new IllegalArgumentException("파일 크기는 최대 10MB 입니다. filename=" + file.getOriginalFilename());
         }
     }
 
@@ -576,6 +591,21 @@ public class ResumeSessionService {
             return file.getBytes();
         } catch (IOException e) {
             throw new IllegalArgumentException("파일을 읽을 수 없습니다. filename=" + file.getOriginalFilename(), e);
+        }
+    }
+
+    private ResumeSession findAndAuthorize(Long sessionId, Long memberId) {
+        ResumeSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("ResumeSession을 찾을 수 없습니다. id=" + sessionId));
+        if (!session.getMember().getId().equals(memberId)) {
+            throw new ForbiddenException("세션에 접근할 권한이 없습니다.");
+        }
+        return session;
+    }
+
+    private void ensureResumeOwner(Resume resume, Long memberId) {
+        if (!resume.getMember().getId().equals(memberId)) {
+            throw new ForbiddenException("해당 이력서에 접근할 권한이 없습니다.");
         }
     }
 
@@ -600,4 +630,3 @@ public class ResumeSessionService {
         listByMember(event.memberId()).forEach(session -> delete(session.getId()));
     }
 }
-

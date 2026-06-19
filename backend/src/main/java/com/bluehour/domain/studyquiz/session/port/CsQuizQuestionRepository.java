@@ -8,5 +8,6 @@ public interface CsQuizQuestionRepository {
     CsQuizQuestion save(CsQuizQuestion question);
 
     Optional<CsQuizQuestion> findById(Long id);
-}
 
+    Optional<CsQuizQuestion> findByIdAndSessionMemberId(Long id, Long memberId);
+}

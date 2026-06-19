@@ -41,7 +41,8 @@ public class RecruitmentEntryController {
     @Operation(summary = "지원 항목 조회", description = "ID로 지원 항목을 조회합니다.")
     @GetMapping("/{id}")
     public ApiResponse<RecruitmentEntryResponse> get(@PathVariable Long id) {
-        return ApiResponse.success(RecruitmentEntryResponse.from(service.get(id)));
+        Long memberId = AuthUtils.currentMemberId();
+        return ApiResponse.success(RecruitmentEntryResponse.from(service.get(id, memberId)));
     }
 
     @Operation(summary = "내 지원 목록 조회", description = "로그인한 사용자의 모든 지원 항목을 조회합니다.")
@@ -60,8 +61,10 @@ public class RecruitmentEntryController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateRecruitmentEntryRequest req
     ) {
+        Long memberId = AuthUtils.currentMemberId();
         RecruitmentEntry updated = service.update(
                 id,
+                memberId,
                 req.companyName(),
                 req.position(),
                 req.step(),
@@ -78,13 +81,15 @@ public class RecruitmentEntryController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateRecruitmentStepRequest req
     ) {
-        return ApiResponse.success(RecruitmentEntryResponse.from(service.changeStep(id, req.step())));
+        Long memberId = AuthUtils.currentMemberId();
+        return ApiResponse.success(RecruitmentEntryResponse.from(service.changeStep(id, memberId, req.step())));
     }
 
     @Operation(summary = "지원 항목 삭제", description = "지원 항목을 삭제합니다.")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        service.delete(id);
+        Long memberId = AuthUtils.currentMemberId();
+        service.delete(id, memberId);
         return ApiResponse.ok();
     }
 }

@@ -3,6 +3,7 @@ package com.bluehour.api.studyquiz.question;
 import com.bluehour.api.studyquiz.question.dto.CreateCsQuizAttemptRequest;
 import com.bluehour.api.studyquiz.question.dto.CsQuizAttemptResponse;
 import com.bluehour.common.ApiResponse;
+import com.bluehour.common.AuthUtils;
 import com.bluehour.domain.studyquiz.session.model.CsQuizAttempt;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,8 +27,8 @@ public class CsQuizQuestionController {
             @PathVariable Long id,
             @Valid @RequestBody CreateCsQuizAttemptRequest req
     ) {
-        CsQuizAttempt attempt = service.submitAttempt(id, req);
+        Long memberId = AuthUtils.currentMemberId();
+        CsQuizAttempt attempt = service.submitAttempt(memberId, id, req);
         return ApiResponse.success(CsQuizAttemptResponse.from(attempt));
     }
 }
-
