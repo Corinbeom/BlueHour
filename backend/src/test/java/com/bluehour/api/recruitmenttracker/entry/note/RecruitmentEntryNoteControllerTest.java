@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -43,6 +45,10 @@ class RecruitmentEntryNoteControllerTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(1L, null, List.of())
+        );
+
         Member member = new Member("user@example.com");
         setId(member, 1L);
 
@@ -59,7 +65,7 @@ class RecruitmentEntryNoteControllerTest {
     @Test
     @DisplayName("GET /api/recruitment-entries/{entryId}/notes → 200")
     void list_성공() throws Exception {
-        given(service.list(10L)).willReturn(List.of(note));
+        given(service.list(10L, 1L)).willReturn(List.of(note));
 
         mockMvc.perform(get("/api/recruitment-entries/10/notes"))
                 .andExpect(status().isOk())
@@ -71,7 +77,7 @@ class RecruitmentEntryNoteControllerTest {
     @Test
     @DisplayName("POST /api/recruitment-entries/{entryId}/notes → 200")
     void create_성공() throws Exception {
-        given(service.create(eq(10L), eq("새 메모"))).willReturn(note);
+        given(service.create(eq(10L), eq(1L), eq("새 메모"))).willReturn(note);
 
         mockMvc.perform(post("/api/recruitment-entries/10/notes")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -85,7 +91,7 @@ class RecruitmentEntryNoteControllerTest {
     @Test
     @DisplayName("PUT /api/recruitment-entries/{entryId}/notes/{noteId} → 200")
     void update_성공() throws Exception {
-        given(service.update(eq(10L), eq(100L), eq("수정된 메모"))).willReturn(note);
+        given(service.update(eq(10L), eq(1L), eq(100L), eq("수정된 메모"))).willReturn(note);
 
         mockMvc.perform(put("/api/recruitment-entries/10/notes/100")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -99,7 +105,7 @@ class RecruitmentEntryNoteControllerTest {
     @Test
     @DisplayName("DELETE /api/recruitment-entries/{entryId}/notes/{noteId} → 200")
     void delete_성공() throws Exception {
-        willDoNothing().given(service).delete(10L, 100L);
+        willDoNothing().given(service).delete(10L, 1L, 100L);
 
         mockMvc.perform(delete("/api/recruitment-entries/10/notes/100"))
                 .andExpect(status().isOk())

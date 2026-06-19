@@ -37,7 +37,18 @@ public class ResumeQuestionService {
                                                CreateResumeFeedbackRequest.BehavioralMetricsDto metricsDto) {
         ResumeQuestion question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new ResourceNotFoundException("ResumeQuestion을 찾을 수 없습니다. id=" + questionId));
+        return createFeedback(question, answerText);
+    }
 
+    @CacheEvict(value = "resumeInterviewStats", allEntries = true)
+    public ResumeAnswerAttempt createFeedback(Long memberId, Long questionId, String answerText,
+                                               CreateResumeFeedbackRequest.BehavioralMetricsDto metricsDto) {
+        ResumeQuestion question = questionRepository.findByIdAndSessionMemberId(questionId, memberId)
+                .orElseThrow(() -> new ResourceNotFoundException("ResumeQuestion을 찾을 수 없습니다. id=" + questionId));
+        return createFeedback(question, answerText);
+    }
+
+    private ResumeAnswerAttempt createFeedback(ResumeQuestion question, String answerText) {
         if (!question.canAttempt()) {
             throw new IllegalArgumentException("최대 답변 횟수(" + ResumeQuestion.MAX_ATTEMPTS + "회)를 초과했습니다.");
         }

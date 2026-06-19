@@ -48,6 +48,7 @@ class ResumeSessionServiceTest {
     @BeforeEach
     void setUp() {
         member = new Member("test@example.com");
+        setId(member, 1L);
         validResumeFile = new MockMultipartFile(
                 "resumeFile",
                 "resume.pdf",
@@ -156,10 +157,10 @@ class ResumeSessionServiceTest {
     // ─────────────────────────────────────────────
 
     @Test
-    @DisplayName("5MB 초과 이력서 파일이면 IllegalArgumentException")
-    void create_실패_파일크기_5MB초과() {
+    @DisplayName("10MB 초과 이력서 파일이면 IllegalArgumentException")
+    void create_실패_파일크기_10MB초과() {
         // given
-        byte[] bigContent = new byte[5 * 1024 * 1024 + 1]; // 5MB + 1 byte
+        byte[] bigContent = new byte[10 * 1024 * 1024 + 1];
         MockMultipartFile bigFile = new MockMultipartFile(
                 "resumeFile", "big.pdf", "application/pdf", bigContent
         );
@@ -167,14 +168,14 @@ class ResumeSessionServiceTest {
         // when & then
         assertThatThrownBy(() -> sut.create(1L, "BE", "테스트", bigFile, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("5MB");
+                .hasMessageContaining("10MB");
     }
 
     @Test
-    @DisplayName("5MB 초과 포트폴리오 파일이면 IllegalArgumentException")
-    void create_실패_포트폴리오_파일크기_5MB초과() {
+    @DisplayName("10MB 초과 포트폴리오 파일이면 IllegalArgumentException")
+    void create_실패_포트폴리오_파일크기_10MB초과() {
         // given
-        byte[] bigContent = new byte[5 * 1024 * 1024 + 1];
+        byte[] bigContent = new byte[10 * 1024 * 1024 + 1];
         MockMultipartFile bigPortfolio = new MockMultipartFile(
                 "portfolioFile", "big_portfolio.pdf", "application/pdf", bigContent
         );
@@ -182,7 +183,7 @@ class ResumeSessionServiceTest {
         // when & then
         assertThatThrownBy(() -> sut.create(1L, "BE", "테스트", validResumeFile, bigPortfolio, null))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("5MB");
+                .hasMessageContaining("10MB");
     }
 
     @Test
@@ -399,5 +400,15 @@ class ResumeSessionServiceTest {
                 new com.bluehour.domain.resume.model.InterviewQuestion(
                         "자기소개를 해주세요.", "지원자의 배경 파악", "경험, 기술스택", "간결하고 핵심만");
         return new ResumeQuestion(0, "자기소개", 90, vo);
+    }
+
+    private static void setId(Object entity, Long id) {
+        try {
+            java.lang.reflect.Field field = entity.getClass().getDeclaredField("id");
+            field.setAccessible(true);
+            field.set(entity, id);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

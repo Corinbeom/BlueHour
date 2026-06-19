@@ -103,7 +103,7 @@ class CsQuizSessionControllerTest {
     @Test
     @DisplayName("GET /api/cs-quiz-sessions/{id} → 200")
     void get_성공() throws Exception {
-        given(service.get(30L)).willReturn(session);
+        given(service.get(30L, 1L)).willReturn(session);
 
         mockMvc.perform(get("/api/cs-quiz-sessions/30"))
                 .andExpect(status().isOk())

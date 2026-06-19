@@ -1,6 +1,7 @@
 package com.bluehour.api.studyquiz.session;
 
 import com.bluehour.common.ResourceNotFoundException;
+import com.bluehour.common.ForbiddenException;
 import com.bluehour.domain.member.model.Member;
 import com.bluehour.domain.member.port.MemberRepository;
 import com.bluehour.domain.studyquiz.bank.model.CsQuestionBankItem;
@@ -88,6 +89,13 @@ public class CsQuizSessionService {
     }
 
     @Transactional(readOnly = true)
+    public CsQuizSession get(Long id, Long memberId) {
+        CsQuizSession session = get(id);
+        ensureOwner(session, memberId);
+        return session;
+    }
+
+    @Transactional(readOnly = true)
     public List<CsQuizSession> listByMember(Long memberId) {
         return sessionRepository.findAllByMemberId(memberId);
     }
@@ -106,6 +114,15 @@ public class CsQuizSessionService {
     })
     public void delete(Long id) {
         get(id);
+        sessionRepository.deleteById(id);
+    }
+
+    @Caching(evict = {
+            @CacheEvict(value = "stats", allEntries = true),
+            @CacheEvict(value = "csQuizSessions", allEntries = true)
+    })
+    public void delete(Long id, Long memberId) {
+        get(id, memberId);
         sessionRepository.deleteById(id);
     }
 
@@ -288,5 +305,10 @@ public class CsQuizSessionService {
     public void onMemberDeleted(MemberDeletedEvent event) {
         listByMember(event.memberId()).forEach(session -> delete(session.getId()));
     }
-}
 
+    private void ensureOwner(CsQuizSession session, Long memberId) {
+        if (!session.getMember().getId().equals(memberId)) {
+            throw new ForbiddenException("퀴즈 세션에 접근할 권한이 없습니다.");
+        }
+    }
+}

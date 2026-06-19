@@ -87,7 +87,7 @@ class ResumeControllerTest {
     @Test
     @DisplayName("GET /api/resumes/{id} → 200")
     void get_성공() throws Exception {
-        given(service.get(5L)).willReturn(resume);
+        given(service.get(1L, 5L)).willReturn(resume);
 
         mockMvc.perform(get("/api/resumes/5"))
                 .andExpect(status().isOk())

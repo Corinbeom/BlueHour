@@ -81,7 +81,7 @@ class RecruitmentEntryControllerTest {
     @Test
     @DisplayName("GET /api/recruitment-entries/{id} 조회 → 200")
     void get_성공() throws Exception {
-        given(service.get(10L)).willReturn(entry);
+        given(service.get(10L, 1L)).willReturn(entry);
 
         mockMvc.perform(get("/api/recruitment-entries/10"))
                 .andExpect(status().isOk())
@@ -104,7 +104,7 @@ class RecruitmentEntryControllerTest {
     @Test
     @DisplayName("PUT /api/recruitment-entries/{id} 수정 → 200")
     void update_성공() throws Exception {
-        given(service.update(eq(10L), eq("네이버"), eq("프론트엔드"), any(), any(), any(), any()))
+        given(service.update(eq(10L), eq(1L), eq("네이버"), eq("프론트엔드"), any(), any(), any(), any()))
                 .willReturn(entry);
 
         mockMvc.perform(put("/api/recruitment-entries/10")
@@ -124,7 +124,7 @@ class RecruitmentEntryControllerTest {
     @Test
     @DisplayName("PATCH /api/recruitment-entries/{id}/step → 200")
     void changeStep_성공() throws Exception {
-        given(service.changeStep(10L, RecruitmentStep.OFFERED)).willReturn(entry);
+        given(service.changeStep(10L, 1L, RecruitmentStep.OFFERED)).willReturn(entry);
 
         mockMvc.perform(patch("/api/recruitment-entries/10/step")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -138,7 +138,7 @@ class RecruitmentEntryControllerTest {
     @Test
     @DisplayName("DELETE /api/recruitment-entries/{id} → 200")
     void delete_성공() throws Exception {
-        willDoNothing().given(service).delete(10L);
+        willDoNothing().given(service).delete(10L, 1L);
 
         mockMvc.perform(delete("/api/recruitment-entries/10"))
                 .andExpect(status().isOk())

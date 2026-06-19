@@ -24,5 +24,9 @@ public class ResumeQuestionRepositoryAdapter implements ResumeQuestionRepository
     public Optional<ResumeQuestion> findById(Long id) {
         return repo.findById(id);
     }
-}
 
+    @Override
+    public Optional<ResumeQuestion> findByIdAndSessionMemberId(Long id, Long memberId) {
+        return repo.findByIdAndSession_Member_Id(id, memberId);
+    }
+}

@@ -106,7 +106,7 @@ class ResumeSessionControllerTest {
                 LocalDateTime.now(), LocalDateTime.now(),
                 null, false
         );
-        given(service.getResponse(20L)).willReturn(dto);
+        given(service.getResponse(20L, 1L)).willReturn(dto);
 
         mockMvc.perform(get("/api/resume-sessions/20"))
                 .andExpect(status().isOk())
