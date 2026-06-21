@@ -1,9 +1,12 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 import { useSpeechInterview } from "../hooks/useSpeechInterviews";
 import type { SpeechInterviewSession, SpeechInterviewQuestion, SpeechFeedback } from "../api/types";
+
+const POLLING_DEADLINE_MS = 5 * 60 * 1000;
 
 // ── 유틸 ──────────────────────────────────────────────────
 
@@ -175,6 +178,37 @@ function QuestionCard({ question, index, animating, direction }: {
               </div>
             </div>
 
+            {/* 발화 피드백 */}
+            {((feedback.deliveryStrengths ?? []).length > 0 || (feedback.deliveryImprovements ?? []).length > 0) && (
+              <div style={{
+                background: "rgb(var(--speech-accent-rgb) / 0.05)", border: "1px solid rgb(var(--speech-accent-rgb) / 0.14)",
+                borderRadius: 12, padding: 16, marginBottom: 16,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 15, color: "var(--speech-accent)" }}>record_voice_over</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "var(--speech-accent-soft)", fontFamily: "monospace", letterSpacing: "0.04em" }}>발화 피드백</span>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {(feedback.deliveryStrengths ?? []).map((s, i) => (
+                      <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                        <span style={{ color: "var(--speech-success)", flexShrink: 0, marginTop: 2, fontSize: 12 }}>✓</span>
+                        <span style={{ fontSize: 13, color: "rgb(var(--speech-text-rgb) / 0.68)", lineHeight: 1.6 }}>{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {(feedback.deliveryImprovements ?? []).map((s, i) => (
+                      <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                        <span style={{ color: "var(--speech-warning)", flexShrink: 0, marginTop: 2, fontSize: 12 }}>→</span>
+                        <span style={{ fontSize: 13, color: "rgb(var(--speech-text-rgb) / 0.68)", lineHeight: 1.6 }}>{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* 모범 답변 (토글) */}
             {feedback.suggestedAnswer && (
               <div style={{
@@ -227,7 +261,11 @@ function QuestionCard({ question, index, animating, direction }: {
 
 // ── ResultContent ──────────────────────────────────────────
 
-function ResultContent({ session }: { session: SpeechInterviewSession }) {
+function ResultContent({ session, isPollingExpired, onRefresh }: {
+  session: SpeechInterviewSession;
+  isPollingExpired: boolean;
+  onRefresh: () => void;
+}) {
   const router = useRouter();
   const [activeCard, setActiveCard] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -274,6 +312,22 @@ function ResultContent({ session }: { session: SpeechInterviewSession }) {
           </span>
         </div>
         <div style={{ flex: 1 }} />
+        {isPollingExpired && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, color: "rgb(var(--speech-warning-rgb) / 0.85)" }}>
+              피드백 생성에 시간이 걸리고 있어요.
+            </span>
+            <button
+              onClick={onRefresh}
+              style={{
+                padding: "5px 10px", borderRadius: 6,
+                border: "1px solid rgb(var(--speech-warning-rgb) / 0.28)",
+                background: "rgb(var(--speech-warning-rgb) / 0.08)",
+                color: "var(--speech-warning)", fontSize: 12, cursor: "pointer", fontWeight: 600,
+              }}
+            >지금 새로고침</button>
+          </div>
+        )}
         <button
           onClick={() => router.push("/speech-interview")}
           style={{
@@ -427,11 +481,32 @@ function ResultContent({ session }: { session: SpeechInterviewSession }) {
 
 export function SpeechInterviewResultPage() {
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const sessionId = searchParams.get("sessionId");
   const parsedId = sessionId ? parseInt(sessionId, 10) : null;
+  const pendingStartRef = useRef<number | null>(null);
+  const [pollingExpired, setPollingExpired] = useState(false);
 
-  const { data: session, isLoading, error } = useSpeechInterview(parsedId, false);
+  const { data: session, isLoading, error } = useSpeechInterview(parsedId, !pollingExpired);
+  const hasPending = (session?.questions ?? []).some((q) => q.answer?.feedbackStatus === "PENDING");
   const displaySession = session;
+
+  useEffect(() => {
+    if (!hasPending) {
+      pendingStartRef.current = null;
+      return;
+    }
+
+    if (pendingStartRef.current === null) {
+      pendingStartRef.current = Date.now();
+    }
+
+    const startedAt = pendingStartRef.current;
+    const remainingMs = Math.max(POLLING_DEADLINE_MS - (Date.now() - startedAt), 0);
+    const timeoutId = window.setTimeout(() => setPollingExpired(true), remainingMs);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [hasPending]);
 
   if (!parsedId) {
     return (
@@ -459,5 +534,15 @@ export function SpeechInterviewResultPage() {
     );
   }
 
-  return <ResultContent session={displaySession} />;
+  return (
+    <ResultContent
+      session={displaySession}
+      isPollingExpired={pollingExpired && hasPending}
+      onRefresh={() => {
+        setPollingExpired(false);
+        pendingStartRef.current = null;
+        queryClient.invalidateQueries({ queryKey: ["speechInterview", parsedId] });
+      }}
+    />
+  );
 }

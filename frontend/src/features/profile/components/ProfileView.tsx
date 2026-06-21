@@ -524,6 +524,20 @@ export function ProfileView() {
 
         {/* ── RIGHT: Mail Schedule + Danger Zone ── */}
         <div className="flex flex-col gap-4">
+          <section className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <span className="material-symbols-outlined text-[20px]">mark_email_unread</span>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">매일 아침 면접 질문 받기</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  추출된 이력서와 관심 기술을 기준으로 정해둔 시간에 연습 질문을 메일로 받아볼 수 있습니다.
+                </p>
+              </div>
+            </div>
+          </section>
+
           <InterviewMailScheduleCard />
 
           {/* Danger Zone */}

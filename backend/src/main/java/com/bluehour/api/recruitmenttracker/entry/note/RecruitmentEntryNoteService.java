@@ -32,8 +32,20 @@ public class RecruitmentEntryNoteService {
         return noteRepository.findAllByEntryId(entryId);
     }
 
+    @Transactional(readOnly = true)
+    public List<RecruitmentEntryNote> list(Long entryId, Long memberId) {
+        entryService.get(entryId, memberId);
+        return noteRepository.findAllByEntryId(entryId);
+    }
+
     public RecruitmentEntryNote create(Long entryId, String content) {
         RecruitmentEntry entry = entryService.get(entryId);
+        RecruitmentEntryNote note = new RecruitmentEntryNote(entry, content);
+        return noteRepository.save(note);
+    }
+
+    public RecruitmentEntryNote create(Long entryId, Long memberId, String content) {
+        RecruitmentEntry entry = entryService.get(entryId, memberId);
         RecruitmentEntryNote note = new RecruitmentEntryNote(entry, content);
         return noteRepository.save(note);
     }
@@ -45,7 +57,22 @@ public class RecruitmentEntryNoteService {
         return note;
     }
 
+    public RecruitmentEntryNote update(Long entryId, Long memberId, Long noteId, String content) {
+        entryService.get(entryId, memberId);
+        RecruitmentEntryNote note = get(noteId);
+        ensureBelongsToEntry(entryId, note);
+        note.updateContent(content);
+        return note;
+    }
+
     public void delete(Long entryId, Long noteId) {
+        RecruitmentEntryNote note = get(noteId);
+        ensureBelongsToEntry(entryId, note);
+        noteRepository.delete(note);
+    }
+
+    public void delete(Long entryId, Long memberId, Long noteId) {
+        entryService.get(entryId, memberId);
         RecruitmentEntryNote note = get(noteId);
         ensureBelongsToEntry(entryId, note);
         noteRepository.delete(note);
@@ -64,5 +91,4 @@ public class RecruitmentEntryNoteService {
         }
     }
 }
-
 

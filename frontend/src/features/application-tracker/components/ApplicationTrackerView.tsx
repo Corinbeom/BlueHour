@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import {
   createRecruitmentEntry,
+  deleteRecruitmentEntry,
   updateRecruitmentEntry,
   updateRecruitmentEntryStep,
 } from "../api/recruitmentEntryApi";
@@ -157,6 +158,16 @@ export function ApplicationTrackerView() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await deleteRecruitmentEntry(id);
+    },
+    onSuccess: async () => {
+      setSelected(null);
+      await qc.invalidateQueries({ queryKey: ["recruitmentEntries"] });
+    },
+  });
+
   function handleDrop(column: ColumnKey, entryId: number) {
     stepMutation.mutate({ id: entryId, step: defaultStepForColumn(column) });
   }
@@ -278,7 +289,10 @@ export function ApplicationTrackerView() {
                   appliedDate={e.appliedDate ?? null}
                   onStepChange={(step) => stepMutation.mutate({ id: e.id, step })}
                   onDragStart={(id) => void id}
-                  onOpenDetails={() => setSelected(e)}
+                  onOpenDetails={() => {
+                    deleteMutation.reset();
+                    setSelected(e);
+                  }}
                 />
               ))
             )}
@@ -290,7 +304,10 @@ export function ApplicationTrackerView() {
         key={selected?.id ?? "details-closed"}
         open={selected != null}
         entry={selected}
-        onClose={() => setSelected(null)}
+        onClose={() => {
+          deleteMutation.reset();
+          setSelected(null);
+        }}
         onStepChange={(id, step) => {
           setSelected((prev) => (prev ? { ...prev, step } : prev));
           stepMutation.mutate({ id, step });
@@ -300,6 +317,14 @@ export function ApplicationTrackerView() {
           await qc.invalidateQueries({ queryKey: ["recruitmentEntries"] });
           setSelected(updated);
         }}
+        onDelete={(id) => {
+          const target = entries.find((e) => e.id === id) ?? selected;
+          const label = target ? `${target.companyName} ${target.position}` : "이 지원";
+          if (!window.confirm(`"${label}" 항목을 삭제하시겠습니까?`)) return;
+          deleteMutation.mutate(id);
+        }}
+        isDeleting={deleteMutation.isPending}
+        deleteError={deleteMutation.error instanceof Error ? deleteMutation.error.message : null}
       />
 
       <AddEntryModal
@@ -456,6 +481,9 @@ function EntryDetailsModal({
   onClose,
   onStepChange,
   onSave,
+  onDelete,
+  isDeleting,
+  deleteError,
 }: {
   open: boolean;
   entry: RecruitmentEntry | null;
@@ -470,6 +498,9 @@ function EntryDetailsModal({
     externalId: string | null;
     appliedDate: string | null;
   }) => Promise<void>;
+  onDelete: (id: number) => void;
+  isDeleting: boolean;
+  deleteError: string | null;
 }) {
   const qc = useQueryClient();
   const [companyName, setCompanyName] = useState(entry?.companyName ?? "");
@@ -719,17 +750,30 @@ function EntryDetailsModal({
           </div>
         </div>
 
-        {/* 저장/닫기 */}
-        <div className="mt-5 flex items-center justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>닫기</Button>
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="gap-2">
+        {/* 저장/삭제/닫기 */}
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <Button
+            variant="outline"
+            onClick={() => onDelete(entry.id)}
+            disabled={isDeleting || saveMutation.isPending}
+            className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          >
+            <span className="material-symbols-outlined text-sm">
+              {isDeleting ? "progress_activity" : "delete"}
+            </span>
+            {isDeleting ? "삭제 중..." : "지원 삭제"}
+          </Button>
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="outline" onClick={onClose} disabled={isDeleting}>닫기</Button>
+            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || isDeleting} className="gap-2">
             {saveMutation.isPending ? (
               <>
                 <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
                 저장 중...
               </>
             ) : "저장"}
-          </Button>
+            </Button>
+          </div>
         </div>
 
         {saveMutation.error && (
@@ -737,6 +781,9 @@ function EntryDetailsModal({
             저장 오류:{" "}
             {saveMutation.error instanceof Error ? saveMutation.error.message : "알 수 없음"}
           </p>
+        )}
+        {deleteError && (
+          <p className="mt-3 text-sm text-destructive">삭제 오류: {deleteError}</p>
         )}
       </div>
     </div>

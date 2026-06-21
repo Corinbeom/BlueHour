@@ -76,14 +76,14 @@ describe("CS quiz hooks", () => {
 
     await act(async () => {
       await result.current.mutateAsync({
-        difficulty: "EASY",
+        difficulty: "LOW",
         topics: ["NETWORK"],
         questionCount: 5,
       });
     });
 
     expect(vi.mocked(createCsQuizSession).mock.calls[0][0]).toEqual({
-      difficulty: "EASY",
+      difficulty: "LOW",
       topics: ["NETWORK"],
       questionCount: 5,
     });

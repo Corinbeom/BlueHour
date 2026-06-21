@@ -54,7 +54,8 @@ public class ResumeController {
     @Operation(summary = "이력서 조회", description = "ID로 이력서 정보를 조회합니다.")
     @GetMapping("/{id}")
     public ApiResponse<ResumeResponse> get(@PathVariable Long id) {
-        return ApiResponse.success(ResumeResponse.from(service.get(id)));
+        Long memberId = AuthUtils.currentMemberId();
+        return ApiResponse.success(ResumeResponse.from(service.get(memberId, id)));
     }
 
     @Operation(summary = "이력서 파일 다운로드/미리보기", description = "이력서 파일 바이너리를 반환합니다. (Content-Disposition: inline)")

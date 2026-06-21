@@ -6,6 +6,8 @@ function summary(overrides: Partial<CoachSummary> = {}): CoachSummary {
   return {
     targetRoles: ["백엔드 개발자"],
     inferredFrom: "TARGET_ROLES",
+    roleCategory: "DEVELOPER",
+    technicalTrack: true,
     recruitment: {
       totalApplications: 3,
       statusBreakdown: { INTERVIEWING: 1 },

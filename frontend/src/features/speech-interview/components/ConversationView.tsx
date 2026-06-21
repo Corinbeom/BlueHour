@@ -297,6 +297,10 @@ export function ConversationView({
                   {stt.transcript}
                   <span style={{ display: "inline-block", width: 2, height: 16, background: "var(--speech-success)", marginLeft: 2, verticalAlign: "middle", animation: "recDot 0.8s ease-in-out infinite" }} />
                 </p>
+              ) : stt.errorMessage ? (
+                <p style={{ fontSize: 14, color: "var(--speech-warning)", lineHeight: 1.6 }}>
+                  {stt.errorMessage}
+                </p>
               ) : (
                 <p style={{ fontSize: 14, color: "rgb(var(--speech-text-rgb) / 0.2)", fontStyle: "italic" }}>말씀해 주세요...</p>
               )}

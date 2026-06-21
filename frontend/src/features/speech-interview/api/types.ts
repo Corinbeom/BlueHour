@@ -19,6 +19,8 @@ export type SpeechFeedback = {
   improvements: string[];
   suggestedAnswer: string;
   followups: string[];
+  deliveryStrengths?: string[];
+  deliveryImprovements?: string[];
 };
 
 export type SpeechInterviewSession = {

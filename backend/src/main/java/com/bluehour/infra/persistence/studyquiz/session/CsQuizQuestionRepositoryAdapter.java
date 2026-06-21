@@ -24,5 +24,9 @@ public class CsQuizQuestionRepositoryAdapter implements CsQuizQuestionRepository
     public Optional<CsQuizQuestion> findById(Long id) {
         return repo.findById(id);
     }
-}
 
+    @Override
+    public Optional<CsQuizQuestion> findByIdAndSessionMemberId(Long id, Long memberId) {
+        return repo.findByIdAndSession_Member_Id(id, memberId);
+    }
+}

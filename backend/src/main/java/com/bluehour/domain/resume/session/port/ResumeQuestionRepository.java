@@ -8,5 +8,6 @@ public interface ResumeQuestionRepository {
     ResumeQuestion save(ResumeQuestion question);
 
     Optional<ResumeQuestion> findById(Long id);
-}
 
+    Optional<ResumeQuestion> findByIdAndSessionMemberId(Long id, Long memberId);
+}

@@ -3,6 +3,8 @@ export type CoachInferredFrom = "TARGET_ROLES" | "JD_ANALYSIS" | "DEFAULT";
 export type CoachSummary = {
   targetRoles: string[];
   inferredFrom: CoachInferredFrom;
+  roleCategory: "DEVELOPER" | "DESIGN" | "PRODUCT" | "MARKETING" | "DATA" | "CUSTOM";
+  technicalTrack: boolean;
   recruitment: {
     totalApplications: number;
     statusBreakdown: Record<string, number>;

@@ -1,6 +1,7 @@
 package com.bluehour.api.resume;
 
 import com.bluehour.common.ResourceNotFoundException;
+import com.bluehour.common.ForbiddenException;
 import com.bluehour.domain.member.model.Member;
 import com.bluehour.domain.member.port.MemberRepository;
 import com.bluehour.domain.resume.model.Resume;
@@ -42,6 +43,7 @@ class ResumeServiceTest {
     @BeforeEach
     void setUp() {
         member = new Member("test@example.com");
+        setId(member, 1L);
         validFile = new MockMultipartFile(
                 "file", "resume.pdf", "application/pdf", "PDF 내용".getBytes()
         );
@@ -131,16 +133,16 @@ class ResumeServiceTest {
     }
 
     @Test
-    @DisplayName("upload 실패 - 5MB 초과")
-    void upload_실패_5MB초과() {
-        byte[] bigContent = new byte[5 * 1024 * 1024 + 1];
+    @DisplayName("upload 실패 - 10MB 초과")
+    void upload_실패_10MB초과() {
+        byte[] bigContent = new byte[10 * 1024 * 1024 + 1];
         MockMultipartFile bigFile = new MockMultipartFile(
                 "file", "big.pdf", "application/pdf", bigContent
         );
 
         assertThatThrownBy(() -> sut.upload(1L, bigFile, ResumeFileType.RESUME, "제목"))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("5MB");
+                .hasMessageContaining("10MB");
     }
 
     @Test
@@ -216,7 +218,7 @@ class ResumeServiceTest {
         given(resumeRepository.findById(10L)).willReturn(Optional.of(resume));
 
         assertThatThrownBy(() -> sut.delete(1L, 10L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ForbiddenException.class)
                 .hasMessageContaining("본인");
     }
 

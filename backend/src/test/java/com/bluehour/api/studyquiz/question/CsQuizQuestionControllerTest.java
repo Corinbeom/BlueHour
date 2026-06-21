@@ -4,10 +4,13 @@ import com.bluehour.api.studyquiz.question.dto.CreateCsQuizAttemptRequest;
 import com.bluehour.domain.studyquiz.session.model.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,6 +37,13 @@ class CsQuizQuestionControllerTest {
     @MockBean
     CsQuizQuestionService service;
 
+    @BeforeEach
+    void setUp() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(1L, null, List.of())
+        );
+    }
+
     @Test
     @DisplayName("POST /api/cs-quiz-questions/{id}/attempts → 200")
     void submitAttempt_성공() throws Exception {
@@ -48,7 +58,7 @@ class CsQuizQuestionControllerTest {
         setId(attempt, 1L);
         setField(attempt, "createdAt", LocalDateTime.now());
 
-        given(service.submitAttempt(eq(7L), any(CreateCsQuizAttemptRequest.class)))
+        given(service.submitAttempt(eq(1L), eq(7L), any(CreateCsQuizAttemptRequest.class)))
                 .willReturn(attempt);
 
         mockMvc.perform(post("/api/cs-quiz-questions/7/attempts")

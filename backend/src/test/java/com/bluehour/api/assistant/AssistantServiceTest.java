@@ -6,6 +6,7 @@ import com.bluehour.domain.assistant.port.AssistantChatTurn;
 import com.bluehour.domain.member.port.MemberRepository;
 import com.bluehour.domain.recruitmenttracker.entry.port.RecruitmentEntryRepository;
 import com.bluehour.domain.resume.port.ResumeRepository;
+import com.bluehour.domain.resume.session.port.ResumeSessionRepository;
 import com.bluehour.domain.speechinterview.port.SpeechInterviewSessionRepository;
 import com.bluehour.domain.studyquiz.session.port.CsQuizSessionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +29,7 @@ class AssistantServiceTest {
     @Mock MemberRepository memberRepository;
     @Mock RecruitmentEntryRepository recruitmentEntryRepository;
     @Mock ResumeRepository resumeRepository;
+    @Mock ResumeSessionRepository resumeSessionRepository;
     @Mock SpeechInterviewSessionRepository speechInterviewSessionRepository;
     @Mock CsQuizSessionRepository csQuizSessionRepository;
     @Mock AssistantAiPort assistantAiPort;
@@ -40,6 +42,7 @@ class AssistantServiceTest {
                 memberRepository,
                 recruitmentEntryRepository,
                 resumeRepository,
+                resumeSessionRepository,
                 speechInterviewSessionRepository,
                 csQuizSessionRepository,
                 assistantAiPort,

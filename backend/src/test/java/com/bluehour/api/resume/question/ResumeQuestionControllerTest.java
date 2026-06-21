@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,6 +39,13 @@ class ResumeQuestionControllerTest {
     @MockBean
     ResumeQuestionService service;
 
+    @BeforeEach
+    void setUp() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(1L, null, List.of())
+        );
+    }
+
     @Test
     @DisplayName("POST /api/resume-questions/{id}/feedback 정상 → 200")
     void feedback_성공() throws Exception {
@@ -48,7 +57,7 @@ class ResumeQuestionControllerTest {
         setId(attempt, 1L);
         setField(attempt, "createdAt", LocalDateTime.now());
 
-        given(service.createFeedback(eq(5L), eq("제 답변입니다"), any())).willReturn(attempt);
+        given(service.createFeedback(eq(1L), eq(5L), eq("제 답변입니다"), any())).willReturn(attempt);
 
         mockMvc.perform(post("/api/resume-questions/5/feedback")
                         .contentType(MediaType.APPLICATION_JSON)

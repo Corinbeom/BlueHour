@@ -157,6 +157,10 @@ public class CsQuizQuestion {
         return id;
     }
 
+    public CsQuizSession getSession() {
+        return session;
+    }
+
     public int getOrderIndex() {
         return orderIndex;
     }
@@ -203,4 +207,3 @@ public class CsQuizQuestion {
         return createdAt;
     }
 }
-

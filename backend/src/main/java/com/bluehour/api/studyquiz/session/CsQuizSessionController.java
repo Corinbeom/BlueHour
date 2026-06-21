@@ -55,13 +55,15 @@ public class CsQuizSessionController {
     @Operation(summary = "퀴즈 세션 상세 조회", description = "세션 ID로 퀴즈 문제 포함 세션 정보를 조회합니다.")
     @GetMapping("/{id}")
     public ApiResponse<CsQuizSessionResponse> get(@PathVariable Long id) {
-        return ApiResponse.success(CsQuizSessionResponse.from(service.get(id)));
+        Long memberId = AuthUtils.currentMemberId();
+        return ApiResponse.success(CsQuizSessionResponse.from(service.get(id, memberId)));
     }
 
     @Operation(summary = "퀴즈 세션 삭제", description = "퀴즈 세션을 삭제합니다.")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        service.delete(id);
+        Long memberId = AuthUtils.currentMemberId();
+        service.delete(id, memberId);
         return ApiResponse.success(null);
     }
 }

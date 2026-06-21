@@ -47,7 +47,7 @@
 **기능:** 9개 토픽·3단계 난이도의 문제 은행 기반 퀴즈 세션과 AI 주관식 채점 피드백
 
 **상세 요구사항:**
-- 9개 토픽: OS, DB, NETWORK, JAVA, SPRING, DS, ALGORITHM, DESIGN_PATTERNS, CS_GENERAL
+- 9개 토픽: OS, NETWORK, DB, SPRING, JAVA, DATA_STRUCTURE, ALGORITHM, ARCHITECTURE, CLOUD
 - 3단계 난이도: LOW, MID, HIGH
 - 문제 유형: 객관식(MULTIPLE_CHOICE) 60% + 주관식(SHORT_ANSWER) 40% 비율
 - 세션당 문제 수: 5~10개 선택

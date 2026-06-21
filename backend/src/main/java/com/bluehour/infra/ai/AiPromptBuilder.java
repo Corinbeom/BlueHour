@@ -29,8 +29,23 @@ public final class AiPromptBuilder {
     private AiPromptBuilder() {}
 
     public static String buildCoachAnalysisPrompt(CoachAiPort.CoachContext context) {
+        String trackRule = context.technicalTrack()
+                ? """
+                - 개발 직무입니다. CS 퀴즈 정확도와 기술 지식 학습을 핵심 준비 축으로 분석하세요.
+                - 낮은 퀴즈 정확도나 부족한 풀이 수가 있으면 기술 면접 대비 계획에 반영하세요.
+                """
+                : """
+                - 비개발 직무입니다. CS 퀴즈를 핵심 평가 기준으로 쓰지 마세요.
+                - 이력서 분석, 지원 현황, 면접 연습, 직무 키워드 정합성, 포트폴리오/경험 정리를 중심으로 분석하세요.
+                - 퀴즈 기록이 있더라도 부가 학습 신호로만 짧게 해석하세요.
+                """;
+        String example = context.technicalTrack()
+                ? "{\"score\":68,\"primary\":\"프론트엔드 개발자\",\"strengths\":[\"DS 78%\",\"면접 3회 완료\"],\"gaps\":[\"OS 45% 취약\",\"이력서 분석 공백\"],\"plan\":[{\"d\":1,\"do\":\"OS 퀴즈 10문제\"},{\"d\":2,\"do\":\"이력서 키워드 보강\"},{\"d\":3,\"do\":\"면접 연습 1회\"}],\"today\":\"OS 퀴즈 10문제 — 지금 바로\"}"
+                : "{\"score\":68,\"primary\":\"프로덕트 매니저\",\"strengths\":[\"지원 3건\",\"면접 2회 완료\"],\"gaps\":[\"이력서 분석 공백\",\"경험 정리 부족\"],\"plan\":[{\"d\":1,\"do\":\"이력서 핵심 경험 보강\"},{\"d\":2,\"do\":\"지원 현황 3건 정리\"},{\"d\":3,\"do\":\"면접 연습 1회\"}],\"today\":\"이력서 핵심 경험 보강 — 지금 바로\"}";
         return """
                 목표직무: %s
+                직무군: %s
+                기술트랙: %s
                 지원: %d건 (%s)
                 이력서: %d개, 마지막분석: %s
                 면접연습: 완료%d/%d회
@@ -38,7 +53,7 @@ public final class AiPromptBuilder {
 
                 위 데이터로 첫 번째 목표직무 중심의 취업 준비 상태를 분석하세요.
                 출력은 반드시 아래 JSON 스키마를 정확히 따르세요:
-                {"score":68,"primary":"프론트엔드 개발자","strengths":["DS 78%%","면접 3회 완료"],"gaps":["OS 45%% 취약","이력서 분석 공백"],"plan":[{"d":1,"do":"OS 퀴즈 10문제"},{"d":2,"do":"이력서 키워드 보강"},{"d":3,"do":"면접 연습 1회"}],"today":"OS 퀴즈 10문제 — 지금 바로"}
+                %s
 
                 규칙:
                 - score는 0~100 정수입니다.
@@ -47,8 +62,11 @@ public final class AiPromptBuilder {
                 - plan은 정확히 3일치이며 d는 1,2,3만 사용합니다.
                 - today는 오늘 바로 실행할 1가지 행동만 40자 이내로 씁니다.
                 - 직무와 무관한 CS 항목이 있으면 일반 역량 관점으로 해석하세요.
+                %s
                 """.formatted(
                 String.join(", ", context.targetRoles()),
+                context.roleCategory(),
+                context.technicalTrack(),
                 context.totalApplications(),
                 formatStatusCounts(context.statusCounts()),
                 context.resumeCount(),
@@ -56,7 +74,9 @@ public final class AiPromptBuilder {
                 context.interviewCompleted(),
                 context.interviewTotal(),
                 formatQuizAccuracy(context.quizAccuracy()),
-                context.quizTotalAttempts()
+                context.quizTotalAttempts(),
+                example,
+                trackRule
         );
     }
 
