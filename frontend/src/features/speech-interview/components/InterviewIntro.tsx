@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useResumeSessions } from "@/features/resume-analyzer/hooks/useResumeSessions";
 import type { ResumeSession } from "@/features/resume-analyzer/api/types";
@@ -154,6 +155,13 @@ export function InterviewIntro({ onStart, isCreatingSession }: Props) {
           <div className="rounded-xl border border-dashed border-white/10 p-6 text-center">
             <p className="text-sm text-white/40">면접 연습 가능한 세션이 없습니다.</p>
             <p className="mt-1 text-xs text-white/25">이력서 분석에서 먼저 질문을 생성해 주세요.</p>
+            <Link
+              href="/resume-analyzer"
+              className="mt-4 inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-500 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-400"
+            >
+              <span className="material-symbols-outlined text-base">upload_file</span>
+              이력서 분석 시작
+            </Link>
           </div>
         ) : (
           <div className="max-h-48 space-y-2 overflow-y-auto pr-1">

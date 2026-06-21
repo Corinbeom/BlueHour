@@ -9,6 +9,7 @@ public record AssistantContext(
         RecruitmentSnapshot recruitment,
         ResumeSnapshot resume,
         InterviewSnapshot interview,
+        List<ResumeSessionSummary> resumeSessions,
         QuizSnapshot quiz
 ) {
     public record RecruitmentSnapshot(
@@ -28,6 +29,14 @@ public record AssistantContext(
             int totalSessions,
             int completedSessions,
             double averageTurns
+    ) {
+    }
+
+    public record ResumeSessionSummary(
+            String positionType,
+            String status,
+            String completedAt,
+            int questionCount
     ) {
     }
 

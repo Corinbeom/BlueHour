@@ -68,7 +68,14 @@ export function AppSidebar() {
               >
                 {item.icon}
               </span>
-              {item.label}
+              <span className="min-w-0">
+                <span className="block truncate">{item.label}</span>
+                {item.description && (
+                  <span className="mt-0.5 block truncate text-[10px] font-normal text-muted-foreground/80">
+                    {item.description}
+                  </span>
+                )}
+              </span>
             </Link>
           );
         })}
