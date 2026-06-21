@@ -20,11 +20,13 @@ export function AppBottomNav() {
       >
         {primaryNav.map((item) => {
           const active = isActivePath(pathname, item.href);
+          const displayLabel = item.shortLabel ?? item.label;
 
           return (
             <Link
               key={item.href}
               href={item.href}
+              aria-label={displayLabel}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex min-h-11 flex-col items-center justify-center gap-0.5 px-1 text-center text-[11px] font-medium transition-colors",
@@ -35,6 +37,7 @@ export function AppBottomNav() {
               )}
             >
               <span
+                aria-hidden="true"
                 className="material-symbols-outlined text-[22px] leading-none"
                 style={{
                   fontVariationSettings: active
@@ -44,7 +47,7 @@ export function AppBottomNav() {
               >
                 {item.icon}
               </span>
-              <span className="max-w-full truncate">{item.shortLabel ?? item.label}</span>
+              <span className="max-w-full truncate">{displayLabel}</span>
             </Link>
           );
         })}

@@ -20,7 +20,7 @@ describe("AppBottomNav", () => {
   it("주요 탭을 렌더링한다", () => {
     render(<AppBottomNav />);
 
-    expect(screen.getByRole("link", { name: /현황/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "현황" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /AI 코치/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /AI 비서/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /면접 준비/ })).toBeInTheDocument();
@@ -42,7 +42,7 @@ describe("AppBottomNav", () => {
 
     expect(activeTab).toHaveAttribute("href", "/resume-analyzer");
     expect(activeTab).toHaveClass("text-primary");
-    expect(screen.getByRole("link", { name: /현황/ })).not.toHaveAttribute(
+    expect(screen.getByRole("link", { name: "현황" })).not.toHaveAttribute(
       "aria-current"
     );
   });
