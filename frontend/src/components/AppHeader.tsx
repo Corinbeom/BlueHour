@@ -7,9 +7,9 @@ function headerLabel(pathname: string): string {
   if (pathname.startsWith("/coach")) return "AI 코치";
   if (pathname.startsWith("/application-tracker")) return "지원 현황";
   if (pathname.startsWith("/study-quiz")) return "CS 문제풀이";
-  if (pathname.startsWith("/resume-analyzer")) return "AI 면접 준비";
+  if (pathname.startsWith("/resume-analyzer")) return "준비 도구";
   if (pathname.startsWith("/profile")) return "프로필";
-  return "대시보드";
+  return "오늘";
 }
 
 interface AppHeaderProps {

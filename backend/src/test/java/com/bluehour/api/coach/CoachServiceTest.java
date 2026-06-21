@@ -33,6 +33,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -85,6 +86,8 @@ class CoachServiceTest {
 
         assertThat(result.targetRoles()).containsExactly("백엔드 개발자");
         assertThat(result.inferredFrom()).isEqualTo("TARGET_ROLES");
+        assertThat(result.roleCategory()).isEqualTo("DEVELOPER");
+        assertThat(result.technicalTrack()).isTrue();
         assertThat(result.recruitment().totalApplications()).isEqualTo(2);
         assertThat(result.recruitment().statusBreakdown()).containsEntry("APPLIED", 1).containsEntry("INTERVIEWING", 1);
         assertThat(result.resume().uploadedCount()).isEqualTo(1);
@@ -141,6 +144,50 @@ class CoachServiceTest {
         then(coachAiPort).should().analyzeReadiness(any());
     }
 
+    @Test
+    @DisplayName("개발 직무는 AI 컨텍스트에 기술 트랙으로 전달한다")
+    void getAnalysis_개발직무_기술트랙() throws Exception {
+        member.completeOnboarding(List.of("프론트엔드 개발자"));
+        given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+        given(recruitmentEntryRepository.findAllByMemberId(1L)).willReturn(List.of());
+        given(resumeRepository.findAllByMemberId(1L)).willReturn(List.of());
+        given(speechInterviewSessionRepository.findByMemberIdOrderByCreatedAtDesc(1L)).willReturn(List.of());
+        given(csQuizSessionRepository.findStatsGroupedByTopic(1L)).willReturn(List.<Object[]>of(
+                new Object[]{CsQuizTopic.OS, 10L, 6L}
+        ));
+        given(coachAiPort.analyzeReadiness(any())).willReturn(analysis());
+
+        sut.getAnalysis(1L);
+
+        var captor = forClass(CoachAiPort.CoachContext.class);
+        then(coachAiPort).should().analyzeReadiness(captor.capture());
+        assertThat(captor.getValue().roleCategory()).isEqualTo("DEVELOPER");
+        assertThat(captor.getValue().technicalTrack()).isTrue();
+        assertThat(captor.getValue().quizTotalAttempts()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("비개발 직무는 AI 컨텍스트에 비기술 트랙으로 전달한다")
+    void getAnalysis_비개발직무_비기술트랙() throws Exception {
+        member.completeOnboarding(List.of("UX/UI 디자이너"));
+        given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+        given(recruitmentEntryRepository.findAllByMemberId(1L)).willReturn(List.of());
+        given(resumeRepository.findAllByMemberId(1L)).willReturn(List.of());
+        given(speechInterviewSessionRepository.findByMemberIdOrderByCreatedAtDesc(1L)).willReturn(List.of());
+        given(csQuizSessionRepository.findStatsGroupedByTopic(1L)).willReturn(List.<Object[]>of(
+                new Object[]{CsQuizTopic.NETWORK, 4L, 2L}
+        ));
+        given(coachAiPort.analyzeReadiness(any())).willReturn(analysis());
+
+        sut.getAnalysis(1L);
+
+        var captor = forClass(CoachAiPort.CoachContext.class);
+        then(coachAiPort).should().analyzeReadiness(captor.capture());
+        assertThat(captor.getValue().roleCategory()).isEqualTo("DESIGN");
+        assertThat(captor.getValue().technicalTrack()).isFalse();
+        assertThat(captor.getValue().quizTotalAttempts()).isEqualTo(4);
+    }
+
     private RecruitmentEntry entry(Long id, String position, RecruitmentStep step, LocalDate appliedDate) throws Exception {
         RecruitmentEntry entry = new RecruitmentEntry(member, "회사", position, step, PlatformType.MANUAL, null, appliedDate);
         setId(entry, id);
@@ -162,6 +209,21 @@ class CoachServiceTest {
         session.startInterview();
         session.complete();
         return session;
+    }
+
+    private CoachAiPort.GeneratedCoachAnalysis analysis() {
+        return new CoachAiPort.GeneratedCoachAnalysis(
+                70,
+                "분석 직무",
+                List.of("지원 시작"),
+                List.of("면접 부족"),
+                List.of(
+                        new CoachAiPort.PlanItem(1, "이력서 보강"),
+                        new CoachAiPort.PlanItem(2, "지원 현황 정리"),
+                        new CoachAiPort.PlanItem(3, "면접 연습 1회")
+                ),
+                "이력서 보강"
+        );
     }
 
     private void setId(Object entity, Long id) throws Exception {

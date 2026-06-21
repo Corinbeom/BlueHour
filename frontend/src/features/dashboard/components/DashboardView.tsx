@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { isTechnicalTrack } from "@/features/member/roleCategory";
 import { useRecruitmentEntries } from "@/features/application-tracker/hooks/useRecruitmentEntries";
 import { useCsQuizSessions } from "@/features/study-quiz/hooks/useCsQuizSessions";
 import { useResumeSessions } from "@/features/resume-analyzer/hooks/useResumeSessions";
@@ -127,6 +128,7 @@ export function DashboardView() {
   const { data: resumeSessions = [], error: resumeError } = useResumeSessions();
 
   const displayName = user?.displayName ?? user?.email?.split("@")[0] ?? "사용자";
+  const technicalTrack = isTechnicalTrack(user?.targetRoles);
   const hasDataError = !!(entriesError || quizError || resumeError);
 
   const interviewingCount = entries.filter((e) => e.step === "INTERVIEWING").length;
@@ -179,13 +181,22 @@ export function DashboardView() {
           </h1>
           <p className="mt-0.5 text-[13px] text-muted-foreground">{today}</p>
         </div>
-        <Link
-          href="/resume-analyzer/report"
-          className={cn(buttonVariants({ size: "lg" }), "gap-1.5")}
-        >
-          <span className="material-symbols-outlined text-sm">analytics</span>
-          면접 리포트 확인
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/assistant"
+            className={cn(buttonVariants({ variant: "outline", size: "lg" }), "gap-1.5")}
+          >
+            <span className="material-symbols-outlined text-sm">support_agent</span>
+            AI 비서
+          </Link>
+          <Link
+            href="/resume-analyzer/report"
+            className={cn(buttonVariants({ size: "lg" }), "gap-1.5")}
+          >
+            <span className="material-symbols-outlined text-sm">analytics</span>
+            면접 리포트 확인
+          </Link>
+        </div>
       </div>
 
       {/* ② 4-stat row — Pulse style */}
@@ -209,12 +220,21 @@ export function DashboardView() {
           icon="record_voice_over"
           color={PA.amber}
         />
-        <StatCard
-          value={quizSessions.length}
-          label="퀴즈 세션"
-          icon="quiz"
-          color={PA.violet}
-        />
+        {technicalTrack ? (
+          <StatCard
+            value={quizSessions.length}
+            label="퀴즈 세션"
+            icon="quiz"
+            color={PA.violet}
+          />
+        ) : (
+          <StatCard
+            value={recentEntries.length}
+            label="최근 지원"
+            icon="work_history"
+            color={PA.violet}
+          />
+        )}
         <StatCard
           value={resumeSessions.length}
           label="면접 세션"
@@ -253,50 +273,80 @@ export function DashboardView() {
             </div>
           </Link>
 
-          {/* CS Quiz card */}
-          <Link href="/study-quiz">
-            <div className="group rounded-xl border border-border bg-card p-[18px_20px] transition-all hover:border-chart-4/50 hover:shadow-md hover:shadow-black/5">
-              <div className="mb-3 flex items-center gap-2.5">
-                <div
-                  className="flex size-8 items-center justify-center rounded-lg"
-                  style={{ background: `color-mix(in oklab, ${PA.violet} 15%, transparent)` }}
-                >
-                  <span className="material-symbols-outlined text-[17px]" style={{ color: PA.violet }}>
-                    quiz
-                  </span>
+          {technicalTrack ? (
+            <Link href="/study-quiz">
+              <div className="group rounded-xl border border-border bg-card p-[18px_20px] transition-all hover:border-chart-4/50 hover:shadow-md hover:shadow-black/5">
+                <div className="mb-3 flex items-center gap-2.5">
+                  <div
+                    className="flex size-8 items-center justify-center rounded-lg"
+                    style={{ background: `color-mix(in oklab, ${PA.violet} 15%, transparent)` }}
+                  >
+                    <span className="material-symbols-outlined text-[17px]" style={{ color: PA.violet }}>
+                      quiz
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold text-muted-foreground">CS 퀴즈</span>
                 </div>
-                <span className="text-xs font-bold text-muted-foreground">CS 퀴즈</span>
+                {recentQuizSessions.length > 0 ? (
+                  <>
+                    <p className="text-sm font-semibold text-foreground">
+                      {recentQuizSessions[0].title}
+                    </p>
+                    <p className="mt-1 text-[12px] text-muted-foreground">
+                      {(Array.isArray(recentQuizSessions[0].topics)
+                        ? recentQuizSessions[0].topics.slice(0, 2).map(topicLabel).join(" · ")
+                        : "") || "토픽 미지정"}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-foreground">
+                      CS 기술 면접 실력을 점검해 보세요
+                    </p>
+                    <p className="mt-1 text-[12px] text-muted-foreground">
+                      OS · 네트워크 · DB · Spring · Java 외 4개 토픽
+                    </p>
+                  </>
+                )}
+                <p
+                  className="mt-4 flex items-center gap-1 text-[13px] font-semibold"
+                  style={{ color: PA.violet }}
+                >
+                  {recentQuizSessions.length > 0 ? "계속하기" : "퀴즈 시작하기"}
+                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                </p>
               </div>
-              {recentQuizSessions.length > 0 ? (
-                <>
-                  <p className="text-sm font-semibold text-foreground">
-                    {recentQuizSessions[0].title}
-                  </p>
-                  <p className="mt-1 text-[12px] text-muted-foreground">
-                    {(Array.isArray(recentQuizSessions[0].topics)
-                      ? recentQuizSessions[0].topics.slice(0, 2).map(topicLabel).join(" · ")
-                      : "") || "토픽 미지정"}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm font-semibold text-foreground">
-                    CS 기술 면접 실력을 점검해 보세요
-                  </p>
-                  <p className="mt-1 text-[12px] text-muted-foreground">
-                    OS · 네트워크 · DB · Spring · Java 외 4개 토픽
-                  </p>
-                </>
-              )}
-              <p
-                className="mt-4 flex items-center gap-1 text-[13px] font-semibold"
-                style={{ color: PA.violet }}
-              >
-                {recentQuizSessions.length > 0 ? "계속하기" : "퀴즈 시작하기"}
-                <span className="material-symbols-outlined text-sm">arrow_forward</span>
-              </p>
-            </div>
-          </Link>
+            </Link>
+          ) : (
+            <Link href="/resume-analyzer/match">
+              <div className="group rounded-xl border border-border bg-card p-[18px_20px] transition-all hover:border-chart-4/50 hover:shadow-md hover:shadow-black/5">
+                <div className="mb-3 flex items-center gap-2.5">
+                  <div
+                    className="flex size-8 items-center justify-center rounded-lg"
+                    style={{ background: `color-mix(in oklab, ${PA.violet} 15%, transparent)` }}
+                  >
+                    <span className="material-symbols-outlined text-[17px]" style={{ color: PA.violet }}>
+                      folder_special
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold text-muted-foreground">포트폴리오/경험 정리</span>
+                </div>
+                <p className="text-sm font-semibold text-foreground">
+                  지원 직무와 맞는 경험 키워드를 점검하세요
+                </p>
+                <p className="mt-1 text-[12px] text-muted-foreground">
+                  이력서, 공고, 포트폴리오의 연결도를 함께 확인
+                </p>
+                <p
+                  className="mt-4 flex items-center gap-1 text-[13px] font-semibold"
+                  style={{ color: PA.violet }}
+                >
+                  직무 적합도 확인
+                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                </p>
+              </div>
+            </Link>
+          )}
         </div>
 
         {/* Recent applications */}

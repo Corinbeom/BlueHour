@@ -3,8 +3,11 @@ package com.bluehour.infra.ai;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.bluehour.domain.coach.port.CoachAiPort;
+
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -88,6 +91,50 @@ class AiPromptBuilderTest {
         assertThat(prompt).contains("모범 답안 텍스트");
         assertThat(prompt).contains("[UserAnswer]");
         assertThat(prompt).contains("사용자 답변 텍스트");
+    }
+
+    @Test
+    @DisplayName("buildCoachAnalysisPrompt: 개발 직무는 CS 퀴즈를 핵심 준비 축으로 포함")
+    void buildCoachAnalysisPrompt_개발직무() {
+        String prompt = AiPromptBuilder.buildCoachAnalysisPrompt(new CoachAiPort.CoachContext(
+                List.of("백엔드 개발자"),
+                "DEVELOPER",
+                true,
+                1,
+                Map.of("APPLIED", 1),
+                1,
+                2,
+                0,
+                0,
+                Map.of("OS", 0.5),
+                10
+        ));
+
+        assertThat(prompt).contains("기술트랙: true");
+        assertThat(prompt).contains("CS 퀴즈 정확도와 기술 지식 학습을 핵심 준비 축");
+        assertThat(prompt).contains("OS 퀴즈 10문제");
+    }
+
+    @Test
+    @DisplayName("buildCoachAnalysisPrompt: 비개발 직무는 CS 퀴즈를 핵심 평가 기준으로 쓰지 않음")
+    void buildCoachAnalysisPrompt_비개발직무() {
+        String prompt = AiPromptBuilder.buildCoachAnalysisPrompt(new CoachAiPort.CoachContext(
+                List.of("UX/UI 디자이너"),
+                "DESIGN",
+                false,
+                1,
+                Map.of("APPLIED", 1),
+                1,
+                2,
+                0,
+                0,
+                Map.of("OS", 0.5),
+                10
+        ));
+
+        assertThat(prompt).contains("기술트랙: false");
+        assertThat(prompt).contains("CS 퀴즈를 핵심 평가 기준으로 쓰지 마세요");
+        assertThat(prompt).contains("포트폴리오/경험 정리");
     }
 
     @Test

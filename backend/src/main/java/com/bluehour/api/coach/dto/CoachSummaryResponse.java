@@ -8,6 +8,8 @@ import java.util.Map;
 public record CoachSummaryResponse(
         List<String> targetRoles,
         String inferredFrom,
+        String roleCategory,
+        boolean technicalTrack,
         Recruitment recruitment,
         Resume resume,
         Interview interview,

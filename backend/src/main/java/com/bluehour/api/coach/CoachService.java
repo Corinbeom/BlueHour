@@ -114,11 +114,14 @@ public class CoachService {
 
         List<String> recentTitles = recentTitles(entries, 5);
         InferredRoles inferredRoles = inferRoles(member.getTargetRoles(), recentTitles);
+        RoleTrack roleTrack = classifyRoleTrack(inferredRoles.roles());
         Map<String, Integer> statusBreakdown = statusBreakdown(entries);
 
         CoachSummaryResponse summary = new CoachSummaryResponse(
                 inferredRoles.roles(),
                 inferredRoles.source(),
+                roleTrack.category(),
+                roleTrack.technicalTrack(),
                 new CoachSummaryResponse.Recruitment(
                         entries.size(),
                         statusBreakdown,
@@ -142,6 +145,8 @@ public class CoachService {
 
         CoachAiPort.CoachContext context = new CoachAiPort.CoachContext(
                 inferredRoles.analysisRoles(),
+                roleTrack.category(),
+                roleTrack.technicalTrack(),
                 entries.size(),
                 statusBreakdown,
                 resumes.size(),
@@ -206,6 +211,41 @@ public class CoachService {
         return List.copyOf(result);
     }
 
+    private static RoleTrack classifyRoleTrack(List<String> roles) {
+        if (roles == null || roles.isEmpty()) return new RoleTrack("CUSTOM", false);
+        for (String role : roles) {
+            String normalized = normalizeRole(role);
+            if (containsAny(normalized, "프론트엔드", "백엔드", "풀스택", "IOS", "ANDROID", "안드로이드", "데이터엔지니어", "DEVOPS", "개발자", "엔지니어")) {
+                return new RoleTrack("DEVELOPER", true);
+            }
+            if (containsAny(normalized, "데이터분석", "데이터사이언티스트", "데이터과학", "분석가")) {
+                return new RoleTrack("DATA", false);
+            }
+            if (containsAny(normalized, "디자이너", "디자인", "UX", "UI", "그래픽", "브랜드디자")) {
+                return new RoleTrack("DESIGN", false);
+            }
+            if (containsAny(normalized, "프로덕트", "PM", "PO", "기획", "서비스기획", "콘텐츠기획")) {
+                return new RoleTrack("PRODUCT", false);
+            }
+            if (containsAny(normalized, "마케터", "마케팅", "퍼포먼스", "그로스")) {
+                return new RoleTrack("MARKETING", false);
+            }
+        }
+        return new RoleTrack("CUSTOM", false);
+    }
+
+    private static String normalizeRole(String role) {
+        if (role == null) return "";
+        return role.trim().replaceAll("\\s+", "").toUpperCase();
+    }
+
+    private static boolean containsAny(String value, String... keywords) {
+        for (String keyword : keywords) {
+            if (value.contains(keyword.trim().replaceAll("\\s+", "").toUpperCase())) return true;
+        }
+        return false;
+    }
+
     private static LocalDateTime lastAnalyzedAt(List<Resume> resumes) {
         return resumes.stream()
                 .filter(resume -> resume.getExtractStatus() == ResumeExtractStatus.EXTRACTED)
@@ -254,9 +294,14 @@ public class CoachService {
     private static String contextHash(CoachAiPort.CoachContext context) {
         String source = String.join("|",
                 String.join(",", context.targetRoles()),
+                context.roleCategory(),
+                String.valueOf(context.technicalTrack()),
                 String.valueOf(context.totalApplications()),
                 context.statusCounts().toString(),
+                String.valueOf(context.resumeCount()),
+                String.valueOf(context.daysSinceLastAnalysis()),
                 String.valueOf(context.interviewCompleted()),
+                String.valueOf(context.interviewTotal()),
                 context.quizAccuracy().toString(),
                 String.valueOf(context.quizTotalAttempts())
         );
@@ -288,5 +333,10 @@ public class CoachService {
             int totalAttempts,
             Map<String, Double> topicAccuracy,
             Map<String, Integer> topicAttempts
+    ) {}
+
+    private record RoleTrack(
+            String category,
+            boolean technicalTrack
     ) {}
 }

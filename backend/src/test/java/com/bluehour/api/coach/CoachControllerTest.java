@@ -47,6 +47,8 @@ class CoachControllerTest {
         given(coachService.getSummary(1L)).willReturn(new CoachSummaryResponse(
                 List.of("백엔드 개발자"),
                 "TARGET_ROLES",
+                "DEVELOPER",
+                true,
                 new CoachSummaryResponse.Recruitment(1, Map.of("APPLIED", 1), List.of("백엔드 개발자")),
                 new CoachSummaryResponse.Resume(0, null),
                 new CoachSummaryResponse.Interview(0, 0, 0.0),
@@ -57,7 +59,9 @@ class CoachControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.targetRoles[0]").value("백엔드 개발자"))
-                .andExpect(jsonPath("$.data.inferredFrom").value("TARGET_ROLES"));
+                .andExpect(jsonPath("$.data.inferredFrom").value("TARGET_ROLES"))
+                .andExpect(jsonPath("$.data.roleCategory").value("DEVELOPER"))
+                .andExpect(jsonPath("$.data.technicalTrack").value(true));
     }
 
     @Test

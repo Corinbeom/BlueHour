@@ -45,6 +45,7 @@ function stepLabel(step: string) {
 }
 
 function readinessData(summary?: CoachSummary, analysis?: CoachAnalysis) {
+  const technicalTrack = summary?.technicalTrack ?? false;
   const applications = Math.min(100, (summary?.recruitment.totalApplications ?? 0) * 12);
   const resume = Math.min(100, (summary?.resume.uploadedCount ?? 0) * 40);
   const interviewTotal = summary?.interview.totalSessions ?? 0;
@@ -60,7 +61,7 @@ function readinessData(summary?: CoachSummary, analysis?: CoachAnalysis) {
     { axis: "지원 활동", value: applications },
     { axis: "이력서", value: resume },
     { axis: "면접 연습", value: interview },
-    { axis: "지식 학습", value: quiz },
+    { axis: technicalTrack ? "기술 학습" : "경험 정리", value: technicalTrack ? quiz : resume },
     { axis: "직무 적합", value: jd },
   ];
 }
@@ -91,6 +92,7 @@ export function CoachDashboardView() {
   const summaryData = summary.data;
   const analysisData = analysis.data;
   const typedToday = useTypingText(analysisData?.today);
+  const technicalTrack = summaryData?.technicalTrack ?? false;
   const chartData = useMemo(
     () => readinessData(summaryData, analysisData),
     [summaryData, analysisData],
@@ -99,7 +101,7 @@ export function CoachDashboardView() {
     summaryData.recruitment.totalApplications > 0 ||
     summaryData.resume.uploadedCount > 0 ||
     summaryData.interview.totalSessions > 0 ||
-    summaryData.quiz.totalAttempts > 0
+    (technicalTrack && summaryData.quiz.totalAttempts > 0)
   );
 
   if (summary.isLoading || analysis.isLoading) {
@@ -135,7 +137,8 @@ export function CoachDashboardView() {
             AI 코치 대시보드
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            지원 현황, 이력서, 면접 연습, 퀴즈 기록을 기준으로 오늘의 우선순위를 계산합니다.
+            지원 현황, 이력서, 면접 연습 기록을 기준으로 오늘의 우선순위를 계산합니다.
+            {technicalTrack ? " 개발 직무는 CS 학습 기록도 함께 반영합니다." : ""}
           </p>
         </div>
         <button
@@ -153,18 +156,22 @@ export function CoachDashboardView() {
         <ReadinessCard analysis={analysisData} typedToday={typedToday} />
         <div className="grid gap-4 lg:grid-cols-2">
           <RadarPanel data={chartData} />
-          <TodayActionCard today={analysisData?.today} />
+          <TodayActionCard today={analysisData?.today} technicalTrack={technicalTrack} />
         </div>
       </section>
 
-      {!hasAnyData && <EmptyCoachState needsTargetRoles={!!analysisData?.needsTargetRoles} />}
+      {!hasAnyData && <EmptyCoachState needsTargetRoles={!!analysisData?.needsTargetRoles} technicalTrack={technicalTrack} />}
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="grid gap-4 lg:grid-cols-2">
-          <WeaknessHeatmap topicAccuracy={summaryData?.quiz.topicAccuracy ?? {}} />
-          <WeeklyPlanTimeline plan={analysisData?.plan ?? []} />
+          {technicalTrack ? (
+            <WeaknessHeatmap topicAccuracy={summaryData?.quiz.topicAccuracy ?? {}} />
+          ) : (
+            <ExperiencePrepPanel />
+          )}
+          <WeeklyPlanTimeline plan={analysisData?.plan ?? []} technicalTrack={technicalTrack} />
         </div>
-        <SummaryPanel summary={summaryData} analysis={analysisData} />
+        <SummaryPanel summary={summaryData} analysis={analysisData} technicalTrack={technicalTrack} />
       </section>
     </div>
   );
@@ -288,7 +295,19 @@ function RadarTooltip({
   );
 }
 
-function TodayActionCard({ today }: { today?: string }) {
+function TodayActionCard({ today, technicalTrack }: { today?: string; technicalTrack: boolean }) {
+  const actions = technicalTrack
+    ? [
+        { icon: "quiz", label: "퀴즈 풀기", href: "/study-quiz", primary: true },
+        { icon: "record_voice_over", label: "면접 연습", href: "/speech-interview" },
+        { icon: "description", label: "이력서 분석", href: "/resume-analyzer" },
+      ]
+    : [
+        { icon: "description", label: "이력서 분석", href: "/resume-analyzer", primary: true },
+        { icon: "add_circle", label: "지원 현황 추가", href: "/application-tracker" },
+        { icon: "record_voice_over", label: "면접 연습", href: "/speech-interview" },
+      ];
+
   return (
     <section className="rounded-xl border border-border bg-card p-5">
       <p className="text-sm font-semibold text-foreground">액션 바로가기</p>
@@ -296,18 +315,19 @@ function TodayActionCard({ today }: { today?: string }) {
         {today || "관심 직무와 활동 데이터가 쌓이면 오늘 할 일이 표시됩니다."}
       </p>
       <div className="mt-5 grid gap-2">
-        <Link href="/study-quiz" className={cn(buttonVariants(), "justify-start gap-2")}>
-          <span className="material-symbols-outlined text-base">quiz</span>
-          퀴즈 풀기
-        </Link>
-        <Link href="/speech-interview" className={cn(buttonVariants({ variant: "outline" }), "justify-start gap-2")}>
-          <span className="material-symbols-outlined text-base">record_voice_over</span>
-          면접 연습
-        </Link>
-        <Link href="/resume-analyzer" className={cn(buttonVariants({ variant: "outline" }), "justify-start gap-2")}>
-          <span className="material-symbols-outlined text-base">description</span>
-          이력서 분석
-        </Link>
+        {actions.map((action) => (
+          <Link
+            key={action.href}
+            href={action.href}
+            className={cn(
+              buttonVariants({ variant: action.primary ? "default" : "outline" }),
+              "justify-start gap-2",
+            )}
+          >
+            <span className="material-symbols-outlined text-base">{action.icon}</span>
+            {action.label}
+          </Link>
+        ))}
       </div>
     </section>
   );
@@ -344,13 +364,47 @@ function WeaknessHeatmap({ topicAccuracy }: { topicAccuracy: Record<string, numb
   );
 }
 
-function WeeklyPlanTimeline({ plan }: { plan: Array<{ d: number; do: string }> }) {
+function ExperiencePrepPanel() {
+  const items = [
+    { icon: "description", label: "이력서 핵심 경험", href: "/resume-analyzer" },
+    { icon: "folder_special", label: "포트폴리오/성과 정리", href: "/resume-analyzer" },
+    { icon: "work_history", label: "지원 직무 키워드", href: "/application-tracker" },
+  ];
+  return (
+    <section className="rounded-xl border border-border bg-card p-5">
+      <p className="text-sm font-semibold text-foreground">경험 정리</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        비개발 직무는 이력서, 포트폴리오, 지원 직무 키워드의 연결도를 우선 봅니다.
+      </p>
+      <div className="mt-4 grid gap-2">
+        {items.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className="flex items-center gap-2.5 rounded-lg border border-border p-3 text-sm font-medium text-foreground transition-colors hover:bg-accent/50"
+          >
+            <span className="material-symbols-outlined text-base text-muted-foreground">{item.icon}</span>
+            {item.label}
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function WeeklyPlanTimeline({ plan, technicalTrack }: { plan: Array<{ d: number; do: string }>; technicalTrack: boolean }) {
   const rows = plan.length
     ? plan
-    : [
+    : technicalTrack
+    ? [
         { d: 1, do: "관심 직무 설정" },
         { d: 2, do: "이력서 업로드" },
         { d: 3, do: "퀴즈 1회 완료" },
+      ]
+    : [
+        { d: 1, do: "관심 직무 설정" },
+        { d: 2, do: "이력서 업로드" },
+        { d: 3, do: "지원 현황 추가" },
       ];
   return (
     <section className="rounded-xl border border-border bg-card p-5">
@@ -374,9 +428,11 @@ function WeeklyPlanTimeline({ plan }: { plan: Array<{ d: number; do: string }> }
 function SummaryPanel({
   summary,
   analysis,
+  technicalTrack,
 }: {
   summary?: CoachSummary;
   analysis?: CoachAnalysis;
+  technicalTrack: boolean;
 }) {
   const statusRows: Array<[string, number]> = Object.entries(summary?.recruitment.statusBreakdown ?? {});
   const displayStatusRows: Array<[string, number]> = statusRows.length ? statusRows : [["READY", 0]];
@@ -387,7 +443,11 @@ function SummaryPanel({
         <Metric label="지원" value={summary?.recruitment.totalApplications ?? 0} />
         <Metric label="이력서" value={summary?.resume.uploadedCount ?? 0} />
         <Metric label="면접 완료" value={summary?.interview.completedSessions ?? 0} />
-        <Metric label="퀴즈 풀이" value={summary?.quiz.totalAttempts ?? 0} />
+        {technicalTrack ? (
+          <Metric label="퀴즈 풀이" value={summary?.quiz.totalAttempts ?? 0} />
+        ) : (
+          <Metric label="최근 공고" value={summary?.recruitment.recentJdTitles.length ?? 0} />
+        )}
       </div>
       <div className="mt-4 space-y-2">
         {displayStatusRows.map(([step, count]) => (
@@ -415,14 +475,22 @@ function Metric({ label, value }: { label: string; value: number }) {
   );
 }
 
-function EmptyCoachState({ needsTargetRoles }: { needsTargetRoles: boolean }) {
-  const items = [
-    { label: "관심 직무 설정", href: "/profile", done: !needsTargetRoles },
-    { label: "이력서 업로드", href: "/profile", done: false },
-    { label: "공고 지원 등록", href: "/application-tracker", done: false },
-    { label: "CS 퀴즈 1회", href: "/study-quiz", done: false },
-    { label: "면접 연습 1회", href: "/speech-interview", done: false },
-  ];
+function EmptyCoachState({ needsTargetRoles, technicalTrack }: { needsTargetRoles: boolean; technicalTrack: boolean }) {
+  const items = technicalTrack
+    ? [
+        { label: "관심 직무 설정", href: "/profile", done: !needsTargetRoles },
+        { label: "이력서 업로드", href: "/profile", done: false },
+        { label: "공고 지원 등록", href: "/application-tracker", done: false },
+        { label: "CS 퀴즈 1회", href: "/study-quiz", done: false },
+        { label: "면접 연습 1회", href: "/speech-interview", done: false },
+      ]
+    : [
+        { label: "관심 직무 설정", href: "/profile", done: !needsTargetRoles },
+        { label: "이력서 업로드", href: "/profile", done: false },
+        { label: "지원 현황 추가", href: "/application-tracker", done: false },
+        { label: "경험 정리", href: "/resume-analyzer", done: false },
+        { label: "면접 연습 1회", href: "/speech-interview", done: false },
+      ];
   return (
     <section className="rounded-xl border border-border bg-card p-5">
       <p className="text-sm font-semibold text-foreground">코치 분석을 시작하기 위한 체크리스트</p>

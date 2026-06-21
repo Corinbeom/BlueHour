@@ -21,7 +21,7 @@ export default function OnboardingPage() {
       return;
     }
     if (user.onboardingCompleted) {
-      router.replace("/coach");
+      router.replace("/dashboard");
     }
   }, [isLoading, user, router]);
 
@@ -30,7 +30,7 @@ export default function OnboardingPage() {
     try {
       await updateMyTargetRoles(roles);
       await refresh();
-      router.replace("/coach");
+      router.replace("/dashboard");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "관심 직무 저장에 실패했습니다.");
     } finally {
@@ -51,7 +51,8 @@ export default function OnboardingPage() {
             준비 중인 직무를 알려주세요
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
-            선택한 직무를 기준으로 이력서, 지원 현황, 퀴즈 기록, 면접 연습을 묶어 분석합니다.
+            선택한 직무를 기준으로 이력서, 지원 현황, 면접 연습 기록을 묶어 분석합니다.
+            개발 직무는 CS 학습 기록도 함께 반영합니다.
             최대 3개까지 선택할 수 있습니다.
           </p>
         </div>

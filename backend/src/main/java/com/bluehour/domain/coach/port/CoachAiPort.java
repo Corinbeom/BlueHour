@@ -12,6 +12,8 @@ public interface CoachAiPort {
 
     record CoachContext(
             List<String> targetRoles,
+            String roleCategory,
+            boolean technicalTrack,
             int totalApplications,
             Map<String, Integer> statusCounts,
             int resumeCount,

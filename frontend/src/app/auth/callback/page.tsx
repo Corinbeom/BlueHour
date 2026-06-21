@@ -15,7 +15,7 @@ export default function AuthCallbackPage() {
       const user = await refresh();
       if (cancelled) return;
       if (user) {
-        router.replace(user.onboardingCompleted ? "/coach" : "/onboarding");
+        router.replace(user.onboardingCompleted ? "/dashboard" : "/onboarding");
       } else {
         router.replace("/login");
       }

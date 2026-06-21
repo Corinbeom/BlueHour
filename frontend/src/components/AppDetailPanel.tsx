@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { isTechnicalTrack } from "@/features/member/roleCategory";
 import { useRecruitmentEntries } from "@/features/application-tracker/hooks/useRecruitmentEntries";
 import { useCsQuizSessions } from "@/features/study-quiz/hooks/useCsQuizSessions";
 import { useResumeSessions } from "@/features/resume-analyzer/hooks/useResumeSessions";
@@ -66,6 +67,15 @@ function FocusPanel() {
     : "이력서/포트폴리오 분석 → 맞춤 질문 생성";
 
   const upcomingInterviews = entries.filter((e) => e.step === "INTERVIEWING").slice(0, 2);
+  const technicalTrack = isTechnicalTrack(user?.targetRoles);
+  const quickActions = [
+    { icon: "support_agent", label: "AI 비서", href: "/assistant" },
+    { icon: "upload_file", label: "이력서 분석 시작", href: "/resume-analyzer" },
+    technicalTrack
+      ? { icon: "code", label: "CS 퀴즈 세션", href: "/study-quiz" }
+      : { icon: "folder_special", label: "포트폴리오/경험 정리", href: "/resume-analyzer/match" },
+    { icon: "add_circle", label: "지원 현황 추가", href: "/application-tracker" },
+  ];
 
   return (
     <div className="flex flex-col gap-5">
@@ -97,11 +107,7 @@ function FocusPanel() {
           빠른 실행
         </p>
         <div className="flex flex-col gap-1.5">
-          {[
-            { icon: "upload_file", label: "이력서 분석 시작", href: "/resume-analyzer" },
-            { icon: "code", label: "CS 퀴즈 세션", href: "/study-quiz" },
-            { icon: "add_circle", label: "지원 현황 추가", href: "/application-tracker" },
-          ].map((a) => (
+          {quickActions.map((a) => (
             <Link
               key={a.href}
               href={a.href}
@@ -150,9 +156,11 @@ function FocusPanel() {
 }
 
 function ActivityPanel() {
+  const { user } = useAuth();
   const { data: resumeSessions = [] } = useResumeSessions();
   const { data: quizSessions = [] } = useCsQuizSessions();
   const { data: entries = [] } = useRecruitmentEntries();
+  const technicalTrack = isTechnicalTrack(user?.targetRoles);
 
   const recentResume = resumeSessions.slice(0, 3);
   const recentEntries = entries.slice(0, 4);
@@ -256,7 +264,7 @@ function ActivityPanel() {
       </div>
 
       {/* CS Quiz stats */}
-      {quizSessions.length > 0 && (
+      {technicalTrack && quizSessions.length > 0 && (
         <div>
           <p className="mb-2 text-sm font-bold text-foreground">
             퀴즈 현황
