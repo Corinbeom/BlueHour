@@ -15,6 +15,8 @@ import com.bluehour.domain.recruitmenttracker.entry.port.RecruitmentEntryReposit
 import com.bluehour.domain.resume.model.Resume;
 import com.bluehour.domain.resume.model.ResumeExtractStatus;
 import com.bluehour.domain.resume.port.ResumeRepository;
+import com.bluehour.domain.resume.session.model.ResumeSession;
+import com.bluehour.domain.resume.session.port.ResumeSessionRepository;
 import com.bluehour.domain.speechinterview.model.SpeechInterviewSession;
 import com.bluehour.domain.speechinterview.model.SpeechInterviewStatus;
 import com.bluehour.domain.speechinterview.port.SpeechInterviewSessionRepository;
@@ -48,10 +50,12 @@ public class AssistantService {
     private static final long STREAM_TIMEOUT_MILLIS = 90_000L;
     private static final int MAX_HISTORY_TURNS = 6;
     private static final int MAX_HISTORY_CONTENT_LENGTH = 500;
+    private static final int MAX_RESUME_SESSION_SUMMARIES = 3;
 
     private final MemberRepository memberRepository;
     private final RecruitmentEntryRepository recruitmentEntryRepository;
     private final ResumeRepository resumeRepository;
+    private final ResumeSessionRepository resumeSessionRepository;
     private final SpeechInterviewSessionRepository speechInterviewSessionRepository;
     private final CsQuizSessionRepository csQuizSessionRepository;
     private final AssistantAiPort assistantAiPort;
@@ -61,6 +65,7 @@ public class AssistantService {
             MemberRepository memberRepository,
             RecruitmentEntryRepository recruitmentEntryRepository,
             ResumeRepository resumeRepository,
+            ResumeSessionRepository resumeSessionRepository,
             SpeechInterviewSessionRepository speechInterviewSessionRepository,
             CsQuizSessionRepository csQuizSessionRepository,
             AssistantAiPort assistantAiPort,
@@ -69,6 +74,7 @@ public class AssistantService {
         this.memberRepository = memberRepository;
         this.recruitmentEntryRepository = recruitmentEntryRepository;
         this.resumeRepository = resumeRepository;
+        this.resumeSessionRepository = resumeSessionRepository;
         this.speechInterviewSessionRepository = speechInterviewSessionRepository;
         this.csQuizSessionRepository = csQuizSessionRepository;
         this.assistantAiPort = assistantAiPort;
@@ -138,6 +144,7 @@ public class AssistantService {
                 .orElseThrow(() -> new ResourceNotFoundException("Member를 찾을 수 없습니다. id=" + memberId));
         List<RecruitmentEntry> entries = recruitmentEntryRepository.findAllByMemberId(memberId);
         List<Resume> resumes = resumeRepository.findAllByMemberId(memberId);
+        List<ResumeSession> resumeSessions = resumeSessionRepository.findAllByMemberId(memberId);
         List<SpeechInterviewSession> interviews = speechInterviewSessionRepository.findByMemberIdOrderByCreatedAtDesc(memberId);
         AssistantContext.QuizSnapshot quiz = quizSnapshot(memberId);
 
@@ -158,6 +165,7 @@ public class AssistantService {
                         completedSessions(interviews),
                         averageTurns(interviews)
                 ),
+                resumeSessionSummaries(resumeSessions),
                 quiz
         );
     }
@@ -257,6 +265,22 @@ public class AssistantService {
                 .average()
                 .orElse(0.0);
         return Math.round(average * 10.0) / 10.0;
+    }
+
+    private static List<AssistantContext.ResumeSessionSummary> resumeSessionSummaries(List<ResumeSession> sessions) {
+        if (sessions == null || sessions.isEmpty()) return List.of();
+        return sessions.stream()
+                .sorted(Comparator
+                        .comparing(ResumeSession::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(ResumeSession::getId, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(MAX_RESUME_SESSION_SUMMARIES)
+                .map(session -> new AssistantContext.ResumeSessionSummary(
+                        cleanText(session.getPositionType(), 50),
+                        session.getStatus().name(),
+                        session.getCompletedAt() == null ? "" : session.getCompletedAt().toLocalDate().toString(),
+                        session.getQuestions().size()
+                ))
+                .toList();
     }
 
     private AssistantContext.QuizSnapshot quizSnapshot(Long memberId) {

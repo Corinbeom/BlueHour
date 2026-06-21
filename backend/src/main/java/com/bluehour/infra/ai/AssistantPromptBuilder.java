@@ -35,6 +35,7 @@ public final class AssistantPromptBuilder {
                 모의 면접:
                 - 총 세션: %d, 완료: %d
                 - 평균 질문 수: %.1f개
+                - 최근 텍스트 면접: %s
 
                 CS 퀴즈:
                 - 총 %d회 풀이
@@ -55,6 +56,7 @@ public final class AssistantPromptBuilder {
                 context.interview().totalSessions(),
                 context.interview().completedSessions(),
                 context.interview().averageTurns(),
+                resumeSessionText(context),
                 context.quiz().totalAttempts(),
                 quizText(context)
         );
@@ -70,6 +72,18 @@ public final class AssistantPromptBuilder {
         if (context.quiz().topicAccuracy().isEmpty()) return "없음";
         return context.quiz().topicAccuracy().stream()
                 .map(item -> "%s %.0f%%(%d회)".formatted(item.topic(), item.accuracy() * 100.0, item.attempts()))
+                .collect(Collectors.joining(", "));
+    }
+
+    private static String resumeSessionText(AssistantContext context) {
+        if (context.resumeSessions().isEmpty()) return "없음";
+        return context.resumeSessions().stream()
+                .map(item -> "%s/%s/%d문항/%s".formatted(
+                        emptyFallback(item.positionType(), "직무 미지정"),
+                        item.status(),
+                        item.questionCount(),
+                        emptyFallback(item.completedAt(), "미완료")
+                ))
                 .collect(Collectors.joining(", "));
     }
 

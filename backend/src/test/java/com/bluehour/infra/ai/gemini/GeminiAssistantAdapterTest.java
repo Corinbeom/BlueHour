@@ -110,6 +110,7 @@ class GeminiAssistantAdapterTest {
                 new AssistantContext.RecruitmentSnapshot(0, Map.of(), List.of()),
                 new AssistantContext.ResumeSnapshot(0, -1),
                 new AssistantContext.InterviewSnapshot(0, 0, 0.0),
+                List.of(),
                 new AssistantContext.QuizSnapshot(0, List.of())
         );
     }
