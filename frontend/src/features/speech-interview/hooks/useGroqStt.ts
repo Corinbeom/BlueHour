@@ -17,6 +17,7 @@ function detectMimeType(): string {
 export function useGroqStt(): SpeechRecognitionHook {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [isSupported, setIsSupported] = useState(() =>
     typeof navigator !== "undefined" &&
     typeof MediaRecorder !== "undefined" &&
@@ -43,12 +44,20 @@ export function useGroqStt(): SpeechRecognitionHook {
         credentials: "include",
         body: formData,
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setErrorMessage("음성 인식에 실패했습니다. 마이크 상태를 확인한 뒤 다시 시도해 주세요.");
+        return;
+      }
       const json = await res.json();
-      const text: string = json?.data?.text ?? "";
-      if (text) setTranscript(text);
+      const text: string = json?.data?.text?.trim() ?? "";
+      if (text) {
+        setTranscript(text);
+        setErrorMessage("");
+      } else {
+        setErrorMessage("음성 인식에 실패했습니다. 마이크 상태를 확인한 뒤 다시 시도해 주세요.");
+      }
     } catch {
-      // STT 실패는 면접 흐름을 방해하지 않음
+      setErrorMessage("음성 인식에 실패했습니다. 마이크 상태를 확인한 뒤 다시 시도해 주세요.");
     }
   }, []);
 
@@ -63,6 +72,7 @@ export function useGroqStt(): SpeechRecognitionHook {
         : new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
       chunksRef.current = [];
+      setErrorMessage("");
 
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
@@ -104,6 +114,7 @@ export function useGroqStt(): SpeechRecognitionHook {
   const resetTranscript = useCallback(() => {
     chunksRef.current = [];
     setTranscript("");
+    setErrorMessage("");
   }, []);
 
   return {
@@ -113,6 +124,7 @@ export function useGroqStt(): SpeechRecognitionHook {
     isSupported,
     transcript,
     interimTranscript: "",
+    errorMessage,
     resetTranscript,
   };
 }
