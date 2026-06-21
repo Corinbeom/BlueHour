@@ -18,6 +18,7 @@ export type SpeechRecognitionHook = {
   isSupported: boolean;
   transcript: string;
   interimTranscript: string;
+  errorMessage: string;
   resetTranscript: () => void;
 };
 
@@ -133,5 +134,14 @@ export function useSpeechRecognition(): SpeechRecognitionHook {
     setInterimTranscript("");
   }, []);
 
-  return { start, stop, isListening, isSupported, transcript, interimTranscript, resetTranscript };
+  return {
+    start,
+    stop,
+    isListening,
+    isSupported,
+    transcript,
+    interimTranscript,
+    errorMessage: "",
+    resetTranscript,
+  };
 }
