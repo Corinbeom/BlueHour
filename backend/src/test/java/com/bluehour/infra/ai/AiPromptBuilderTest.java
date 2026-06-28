@@ -94,6 +94,37 @@ class AiPromptBuilderTest {
     }
 
     @Test
+    @DisplayName("buildCultureFitQuestionPrompt: 기업 문화와 JD 기반 질문 생성을 지시한다")
+    void buildCultureFitQuestionPrompt_정상() {
+        String prompt = AiPromptBuilder.buildCultureFitQuestionPrompt(
+                "빠른 실행과 투명한 공유를 중요하게 여기는 회사입니다.",
+                "프로덕트 매니저 JD"
+        );
+
+        assertThat(prompt).contains("[기업 문화/가치]");
+        assertThat(prompt).contains("빠른 실행과 투명한 공유");
+        assertThat(prompt).contains("[채용공고(JD)]");
+        assertThat(prompt).contains("프로덕트 매니저 JD");
+        assertThat(prompt).contains("STAR 방식");
+    }
+
+    @Test
+    @DisplayName("buildCultureFitFeedbackPrompt: 문화 정렬도 평가 필드를 요구한다")
+    void buildCultureFitFeedbackPrompt_정상() {
+        String prompt = AiPromptBuilder.buildCultureFitFeedbackPrompt(
+                "고객 중심과 주도성을 중요하게 여깁니다.",
+                null,
+                "고객 중심 경험을 설명해 주세요.",
+                "사용자 인터뷰를 바탕으로 우선순위를 바꾼 경험이 있습니다."
+        );
+
+        assertThat(prompt).contains("alignmentNote");
+        assertThat(prompt).contains("고객 중심과 주도성");
+        assertThat(prompt).contains("제공되지 않음");
+        assertThat(prompt).contains("기업의 특정 가치나 일하는 방식");
+    }
+
+    @Test
     @DisplayName("buildCoachAnalysisPrompt: 개발 직무는 CS 퀴즈를 핵심 준비 축으로 포함")
     void buildCoachAnalysisPrompt_개발직무() {
         String prompt = AiPromptBuilder.buildCoachAnalysisPrompt(new CoachAiPort.CoachContext(

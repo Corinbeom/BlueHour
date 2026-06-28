@@ -112,6 +112,33 @@ public class GeminiInterviewAiAdapter implements InterviewAiPort, CsQuizAiPort, 
         return new InterviewAiPort.GeneratedFeedback(payload.strengths(), payload.improvements(), payload.suggestedAnswer(), payload.followups());
     }
 
+    @Override
+    public List<GeneratedQuestion> generateCultureFitQuestions(String systemInstruction, String companyCultureText, String jobDescriptionText) {
+        requireApiKey();
+
+        String prompt = AiPromptBuilder.buildCultureFitQuestionPrompt(companyCultureText, jobDescriptionText);
+        return doGenerateQuestions(systemInstruction, prompt);
+    }
+
+    @Override
+    public InterviewAiPort.GeneratedCultureFitFeedback generateCultureFitFeedback(
+            String systemInstruction,
+            String companyCultureText,
+            String jobDescriptionText,
+            String question,
+            String answerText
+    ) {
+        requireApiKey();
+
+        String prompt = AiPromptBuilder.buildCultureFitFeedbackPrompt(companyCultureText, jobDescriptionText, question, answerText);
+        JsonNode json = generateStructuredJsonWithRetry(systemInstruction, prompt, cultureFitFeedbackResponseSchema(), RetryProfile.FEEDBACK);
+        try {
+            return objectMapper.treeToValue(json, InterviewAiPort.GeneratedCultureFitFeedback.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Gemini 컬처핏 피드백 응답 파싱에 실패했습니다.", e);
+        }
+    }
+
 
     @Override
     public List<CsQuizAiPort.GeneratedQuizQuestion> generateQuestions(
@@ -824,6 +851,20 @@ public class GeminiInterviewAiAdapter implements InterviewAiPort, CsQuizAiPort, 
                 "followups", Map.of("type", "array", "items", Map.of("type", "string"), "minItems", 0, "maxItems", 10)
         ));
         schema.put("required", List.of("strengths", "improvements", "suggestedAnswer", "followups"));
+        return schema;
+    }
+
+    private static Map<String, Object> cultureFitFeedbackResponseSchema() {
+        Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("type", "object");
+        schema.put("properties", Map.of(
+                "strengths", Map.of("type", "array", "items", Map.of("type", "string"), "minItems", 0, "maxItems", 10),
+                "improvements", Map.of("type", "array", "items", Map.of("type", "string"), "minItems", 0, "maxItems", 10),
+                "suggestedAnswer", Map.of("type", "string", "nullable", true),
+                "followups", Map.of("type", "array", "items", Map.of("type", "string"), "minItems", 0, "maxItems", 10),
+                "alignmentNote", Map.of("type", "string")
+        ));
+        schema.put("required", List.of("strengths", "improvements", "suggestedAnswer", "followups", "alignmentNote"));
         return schema;
     }
 

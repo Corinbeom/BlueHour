@@ -1,6 +1,7 @@
 package com.bluehour.infra.text;
 
 import com.bluehour.domain.resume.session.port.UrlTextFetcherPort;
+import com.bluehour.common.UrlFetchException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Component;
@@ -43,19 +44,19 @@ public class JsoupUrlTextFetcherAdapter implements UrlTextFetcherPort {
             if (status >= 300 && status < 400) {
                 String location = resp.headers().firstValue("location").orElse(null);
                 if (location == null || location.isBlank()) {
-                    throw new IllegalArgumentException("URL 리다이렉트 location이 없습니다. status=" + status);
+                    throw new UrlFetchException("URL 리다이렉트 location이 없습니다. status=" + status);
                 }
                 uri = uri.resolve(location);
                 continue;
             }
 
             if (status < 200 || status >= 300) {
-                throw new IllegalArgumentException("URL 응답이 실패했습니다. status=" + status);
+                throw new UrlFetchException("URL 응답이 실패했습니다. status=" + status);
             }
 
             byte[] body = resp.body() == null ? new byte[0] : resp.body();
             if (body.length > MAX_BYTES) {
-                throw new IllegalArgumentException("URL 콘텐츠가 너무 큽니다. 최대 1MB");
+                throw new UrlFetchException("URL 콘텐츠가 너무 큽니다. 최대 1MB");
             }
 
             String contentType = resp.headers().firstValue("content-type").orElse("").toLowerCase(Locale.ROOT);
@@ -68,7 +69,7 @@ public class JsoupUrlTextFetcherAdapter implements UrlTextFetcherPort {
             return normalize(raw);
         }
 
-        throw new IllegalArgumentException("URL 리다이렉트가 너무 많습니다. 최대 " + MAX_REDIRECTS);
+        throw new UrlFetchException("URL 리다이렉트가 너무 많습니다. 최대 " + MAX_REDIRECTS);
     }
 
     private HttpResponse<byte[]> send(URI uri) {
@@ -82,7 +83,7 @@ public class JsoupUrlTextFetcherAdapter implements UrlTextFetcherPort {
             return httpClient.send(req, HttpResponse.BodyHandlers.ofByteArray());
         } catch (IOException | InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalArgumentException("URL 콘텐츠를 가져오지 못했습니다.", e);
+            throw new UrlFetchException("URL 콘텐츠를 가져오지 못했습니다.", e);
         }
     }
 
@@ -90,26 +91,26 @@ public class JsoupUrlTextFetcherAdapter implements UrlTextFetcherPort {
         try {
             return new URI(url.trim());
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("URL 형식이 올바르지 않습니다.");
+            throw new UrlFetchException("URL 형식이 올바르지 않습니다.");
         }
     }
 
     private static void validatePublicHttpUri(URI uri) {
         String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
         if (!scheme.equals("http") && !scheme.equals("https")) {
-            throw new IllegalArgumentException("http/https URL만 지원합니다.");
+            throw new UrlFetchException("http/https URL만 지원합니다.");
         }
 
         String host = uri.getHost();
         if (host == null || host.isBlank()) {
-            throw new IllegalArgumentException("URL host가 올바르지 않습니다.");
+            throw new UrlFetchException("URL host가 올바르지 않습니다.");
         }
 
         InetAddress[] addresses;
         try {
             addresses = InetAddress.getAllByName(host);
         } catch (UnknownHostException e) {
-            throw new IllegalArgumentException("URL host를 해석할 수 없습니다.");
+            throw new UrlFetchException("URL host를 해석할 수 없습니다.");
         }
 
         for (InetAddress addr : addresses) {
@@ -118,7 +119,7 @@ public class JsoupUrlTextFetcherAdapter implements UrlTextFetcherPort {
                     || addr.isLinkLocalAddress()
                     || addr.isSiteLocalAddress()
                     || addr.isMulticastAddress()) {
-                throw new IllegalArgumentException("사설 네트워크/로컬 주소로의 접근은 허용되지 않습니다.");
+                throw new UrlFetchException("사설 네트워크/로컬 주소로의 접근은 허용되지 않습니다.");
             }
         }
     }
@@ -137,4 +138,3 @@ public class JsoupUrlTextFetcherAdapter implements UrlTextFetcherPort {
         return t;
     }
 }
-
