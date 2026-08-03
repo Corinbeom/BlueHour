@@ -52,7 +52,7 @@ spring:
       enabled: true
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 springdoc:
   swagger-ui:
@@ -107,5 +107,4 @@ bluehour:
 
   cron:
     secret: ${BLUEHOUR_CRON_SECRET:}
-
 
