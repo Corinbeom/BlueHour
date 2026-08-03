@@ -107,6 +107,7 @@ public class CultureFitSessionService {
 
     public CultureFitQuestion submitAnswer(Long memberId, Long sessionId, Long questionId, String answerText) {
         CultureFitSession session = findAndAuthorize(memberId, sessionId);
+        ensureEditable(session);
         CultureFitQuestion question = findQuestion(session, questionId);
         question.submitAnswer(answerText);
         session.markInProgress();
@@ -116,6 +117,7 @@ public class CultureFitSessionService {
 
     public CultureFitQuestion generateFeedback(Long memberId, Long sessionId, Long questionId) {
         CultureFitSession session = findAndAuthorize(memberId, sessionId);
+        ensureEditable(session);
         CultureFitQuestion question = findQuestion(session, questionId);
         if (question.getAnswerText() == null || question.getAnswerText().isBlank()) {
             throw new IllegalArgumentException("피드백 생성 전에 답변을 먼저 제출해야 합니다.");
@@ -176,6 +178,12 @@ public class CultureFitSessionService {
                 .filter(question -> question.getId().equals(questionId))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("CultureFitQuestion을 찾을 수 없습니다. id=" + questionId));
+    }
+
+    private void ensureEditable(CultureFitSession session) {
+        if (session.getStatus() == CultureFitSessionStatus.COMPLETED) {
+            throw new ConflictException("완료된 세션은 수정할 수 없습니다.");
+        }
     }
 
     private static String truncate(String text, int maxChars) {

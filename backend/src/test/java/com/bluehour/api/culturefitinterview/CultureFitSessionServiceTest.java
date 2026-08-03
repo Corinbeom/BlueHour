@@ -1,6 +1,8 @@
 package com.bluehour.api.culturefitinterview;
 
 import com.bluehour.api.culturefitinterview.dto.CultureFitSessionCreateRequest;
+import com.bluehour.common.ConflictException;
+import com.bluehour.domain.culturefitinterview.model.CultureFitFeedback;
 import com.bluehour.domain.culturefitinterview.model.CultureFitFeedbackStatus;
 import com.bluehour.domain.culturefitinterview.model.CultureFitQuestion;
 import com.bluehour.domain.culturefitinterview.model.CultureFitSession;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -102,5 +105,54 @@ class CultureFitSessionServiceTest {
 
         assertThat(updated.getFeedbackStatus()).isEqualTo(CultureFitFeedbackStatus.COMPLETED);
         assertThat(updated.getFeedback().getAlignmentNote()).contains("고객 중심 가치");
+    }
+
+    @Test
+    @DisplayName("submitAnswer: 완료된 세션의 답변은 수정할 수 없다")
+    void submitAnswer_rejectsCompletedSession() {
+        CultureFitSession session = completedSession();
+        CultureFitQuestion question = session.getQuestions().get(0);
+        given(sessionRepo.findById(100L)).willReturn(Optional.of(session));
+
+        assertThatThrownBy(() -> sut.submitAnswer(1L, 100L, question.getId(), "수정한 답변"))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("완료된 세션은 수정할 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("generateFeedback: 완료된 세션의 피드백은 다시 생성할 수 없다")
+    void generateFeedback_rejectsCompletedSession() {
+        CultureFitSession session = completedSession();
+        CultureFitQuestion question = session.getQuestions().get(0);
+        given(sessionRepo.findById(100L)).willReturn(Optional.of(session));
+
+        assertThatThrownBy(() -> sut.generateFeedback(1L, 100L, question.getId()))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("완료된 세션은 수정할 수 없습니다.");
+    }
+
+    private CultureFitSession completedSession() {
+        CultureFitSession session = new CultureFitSession(
+                member,
+                "테스트 회사",
+                "고객 중심과 빠른 실행을 중요하게 여기는 회사입니다.",
+                "JD",
+                "BACKEND"
+        );
+        CultureFitQuestion question = new CultureFitQuestion(
+                0, "고객 중심", 80, "고객 중심 경험은?", "문화 정렬 검증", "고객", null
+        );
+        session.addQuestion(question);
+        ReflectionTestUtils.setField(question, "id", 10L);
+        question.submitAnswer("고객 인터뷰 결과를 바탕으로 우선순위를 바꿨습니다.");
+        question.completeFeedback(new CultureFitFeedback(
+                List.of("강점"),
+                List.of("보완점"),
+                "개선 답변",
+                List.of("꼬리질문"),
+                "문화와 잘 맞습니다."
+        ));
+        session.complete();
+        return session;
     }
 }

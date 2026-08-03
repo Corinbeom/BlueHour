@@ -328,6 +328,7 @@ export function CultureFitView() {
                   onFeedback={() => onGenerateFeedback(question)}
                   isSubmitting={answerMutation.isPending}
                   isGenerating={feedbackMutation.isPending}
+                  isReadOnly={activeSession.status === "COMPLETED"}
                 />
               ))
             )}
@@ -346,6 +347,7 @@ function QuestionCard({
   onFeedback,
   isSubmitting,
   isGenerating,
+  isReadOnly,
 }: {
   question: CultureFitQuestion;
   draft: string;
@@ -354,6 +356,7 @@ function QuestionCard({
   onFeedback: () => void;
   isSubmitting: boolean;
   isGenerating: boolean;
+  isReadOnly: boolean;
 }) {
   const hasAnswer = Boolean(question.answerText?.trim());
   const feedback = question.feedbackStatus === "COMPLETED" ? question.feedback : null;
@@ -397,6 +400,7 @@ function QuestionCard({
         <textarea
           value={draft}
           onChange={(e) => onDraftChange(e.target.value)}
+          disabled={isReadOnly}
           className="min-h-28 resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm leading-6 outline-none transition-colors focus:border-primary"
           placeholder="답변을 입력하세요."
         />
@@ -404,7 +408,7 @@ function QuestionCard({
           <button
             type="button"
             onClick={onSubmit}
-            disabled={!draft.trim() || isSubmitting}
+            disabled={isReadOnly || !draft.trim() || isSubmitting}
             className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-[18px]">
@@ -415,7 +419,7 @@ function QuestionCard({
           <button
             type="button"
             onClick={onFeedback}
-            disabled={!hasAnswer || isGenerating}
+            disabled={isReadOnly || !hasAnswer || isGenerating}
             className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-[18px]">
