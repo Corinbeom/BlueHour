@@ -86,6 +86,16 @@ public class AiRoutingAdapter implements InterviewAiPort, CsQuizAiPort, CoachAiP
         return gemini.conductInterview(systemInstruction, resumeContext, positionType, history, turnCount, maxTurns);
     }
 
+    @Override
+    public List<GeneratedQuestion> generateCultureFitQuestions(String systemInstruction, String companyCultureText, String jobDescriptionText) {
+        return gemini.generateCultureFitQuestions(systemInstruction, companyCultureText, jobDescriptionText);
+    }
+
+    @Override
+    public GeneratedCultureFitFeedback generateCultureFitFeedback(String systemInstruction, String companyCultureText, String jobDescriptionText, String question, String answerText) {
+        return gemini.generateCultureFitFeedback(systemInstruction, companyCultureText, jobDescriptionText, question, answerText);
+    }
+
     // ── Light → Groq ──
 
     @Override

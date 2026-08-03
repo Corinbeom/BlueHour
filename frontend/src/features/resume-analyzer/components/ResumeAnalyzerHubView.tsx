@@ -114,6 +114,13 @@ export function ResumeAnalyzerHubView() {
             스피치 면접
           </Link>
           <Link
+            href="/culture-fit"
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-all hover:bg-accent/50"
+          >
+            <span className="material-symbols-outlined text-sm">diversity_3</span>
+            컬처핏 면접
+          </Link>
+          <Link
             href="/resume-analyzer/practice"
             className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90"
           >

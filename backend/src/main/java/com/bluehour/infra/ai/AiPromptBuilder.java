@@ -228,6 +228,85 @@ public final class AiPromptBuilder {
         );
     }
 
+    public static String buildCultureFitQuestionPrompt(String companyCultureText, String jobDescriptionText) {
+        return """
+                [언어 규칙] 모든 출력은 반드시 한국어로만 작성하세요.
+
+                아래 기업 정보를 기반으로 컬처핏 면접 질문을 생성하세요.
+
+                출력은 반드시 아래 JSON 스키마를 정확히 따르세요:
+                {
+                  "questions": [
+                    {
+                      "badge": "핵심가치명",
+                      "likelihood": 85,
+                      "question": "질문",
+                      "intention": "검증의도",
+                      "keywords": "키워드1, 키워드2",
+                      "modelAnswer": "모범답변"
+                    }
+                  ]
+                }
+
+                질문 구성 원칙:
+                - 기업의 핵심 가치와 일하는 방식에서 직접 도출된 행동 기반 질문을 만드세요.
+                - "왜 우리 회사인가요?"처럼 포괄적인 질문도 가능하지만, 반드시 기업 문화 요소와 연결하세요.
+                - STAR 방식으로 답변 가능한 경험 질문을 포함하세요.
+                - 지원자의 가치관, 협업 방식, 성장 마인드셋, 주도성을 검증하세요.
+                - 질문은 정확히 5개 생성하세요.
+                - question은 250자 이내, intention은 350자 이내, modelAnswer는 500자 이내로 작성하세요.
+
+                [기업 문화/가치]
+                %s
+
+                [채용공고(JD)]
+                %s
+                """.formatted(
+                nullToEmpty(companyCultureText),
+                isBlank(jobDescriptionText) ? "제공되지 않음" : jobDescriptionText
+        );
+    }
+
+    public static String buildCultureFitFeedbackPrompt(
+            String companyCultureText,
+            String jobDescriptionText,
+            String question,
+            String answerText
+    ) {
+        return """
+                [언어 규칙] 모든 출력은 반드시 한국어로만 작성하세요.
+
+                아래 기업 문화 맥락에서 이 답변을 평가하세요.
+
+                출력은 반드시 아래 JSON 스키마를 정확히 따르세요:
+                {"strengths":["기업 문화와 정렬된 강점"],"improvements":["더 강조하거나 보완할 부분"],"suggestedAnswer":"개선 예시 답변","followups":["예상 꼬리질문"],"alignmentNote":"이 답변이 해당 기업의 X 가치와 어떻게 정렬/불일치하는지 1-2문장"}
+
+                평가 기준:
+                - strengths는 답변이 기업 문화와 정렬되는 부분을 구체적인 가치/문화 요소와 연결하세요.
+                - improvements는 회사 가치에 비추어 더 보완해야 할 증거, 태도, 표현을 제시하세요.
+                - suggestedAnswer는 사용자의 답변을 바탕으로 개선한 예시여야 하며, 허위 경험을 추가하지 마세요.
+                - alignmentNote에는 기업의 특정 가치나 일하는 방식을 반드시 명시하세요.
+                - suggestedAnswer는 900자 이내로 작성하세요.
+
+                [기업 문화]
+                %s
+
+                [채용공고(JD)]
+                %s
+
+                [질문]
+                %s
+
+                [답변]
+                %s
+                """.formatted(
+                nullToEmpty(companyCultureText),
+                isBlank(jobDescriptionText) ? "제공되지 않음" : jobDescriptionText,
+                nullToEmpty(question),
+                nullToEmpty(answerText)
+        );
+    }
+
     public static String buildCsQuizQuestionsPrompt(Set<CsQuizTopic> topics, CsQuizDifficulty difficulty, CsQuizQuestionType type, int count) {
         return buildCsQuizQuestionsPrompt(topics, difficulty, type, count, List.of());
     }
@@ -564,5 +643,9 @@ public final class AiPromptBuilder {
 
     public static String nullToEmpty(String s) {
         return s == null ? "" : s;
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 }

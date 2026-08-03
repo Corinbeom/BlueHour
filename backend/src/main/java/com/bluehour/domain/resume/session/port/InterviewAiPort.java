@@ -21,6 +21,15 @@ public interface InterviewAiPort {
         }
     }
 
+    record GeneratedCultureFitFeedback(
+            List<String> strengths,
+            List<String> improvements,
+            String suggestedAnswer,
+            List<String> followups,
+            String alignmentNote
+    ) {
+    }
+
     List<GeneratedQuestion> generateQuestions(String systemInstruction, String positionType, String resumeText, String portfolioText, String portfolioUrl, List<String> targetTechnologies);
 
     default List<GeneratedQuestion> generateQuestionsWithHistory(String systemInstruction, String positionType, String resumeText, String portfolioText, String portfolioUrl, List<String> targetTechnologies, List<String> previousQuestions) {
@@ -87,5 +96,22 @@ public interface InterviewAiPort {
     ) {
         throw new UnsupportedOperationException("conductInterview가 구현되지 않았습니다.");
     }
-}
 
+    default List<GeneratedQuestion> generateCultureFitQuestions(
+            String systemInstruction,
+            String companyCultureText,
+            String jobDescriptionText
+    ) {
+        throw new UnsupportedOperationException("generateCultureFitQuestions가 구현되지 않았습니다.");
+    }
+
+    default GeneratedCultureFitFeedback generateCultureFitFeedback(
+            String systemInstruction,
+            String companyCultureText,
+            String jobDescriptionText,
+            String question,
+            String answerText
+    ) {
+        throw new UnsupportedOperationException("generateCultureFitFeedback가 구현되지 않았습니다.");
+    }
+}

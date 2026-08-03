@@ -39,6 +39,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail("NOT_FOUND", e.getMessage()));
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConflict(ConflictException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.fail("CONFLICT", e.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()
@@ -77,6 +83,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleMaxUpload(MaxUploadSizeExceededException e) {
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
                 .body(ApiResponse.fail("PAYLOAD_TOO_LARGE", "업로드 파일 크기가 너무 큽니다."));
+    }
+
+    @ExceptionHandler(UrlFetchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUrlFetch(UrlFetchException e) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.fail("URL_FETCH_FAILED", e.getMessage()));
     }
 
     /**
@@ -125,4 +137,3 @@ public class GlobalExceptionHandler {
         return field + ": " + msg + " (rejected=" + rejected + ")";
     }
 }
-
