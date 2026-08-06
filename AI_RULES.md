@@ -12,6 +12,17 @@ Frontend
 * npm run build
 * npm run lint
 
+## Git Workflow
+
+* Never implement changes directly on `main` or `develop`.
+* Before editing files, create a task branch from the latest `origin/develop`.
+* Use a branch prefix that matches the work: `feature/*`, `fix/*`, `chore/*`, `docs/*`, `refactor/*`, or `test/*`.
+* Open task pull requests against `develop`.
+* Only release pull requests from `develop` may target `main`.
+* Use `hotfix/*` from `main` only when the user explicitly approves an emergency production fix, then merge the result back into `develop`.
+* Never delete `main` or `develop`.
+* Do not push a task branch, mark a pull request ready, or merge a pull request without explicit user authorization.
+
 ## Architecture
 
 * All API responses must use ApiResponse<T>.
