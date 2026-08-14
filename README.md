@@ -78,8 +78,10 @@ GOOGLE_CLIENT_ID=your_id
 GOOGLE_CLIENT_SECRET=your_secret
 KAKAO_CLIENT_ID=your_id
 KAKAO_CLIENT_SECRET=your_secret
-JWT_SECRET=your_secret
+JWT_SECRET=your_secret_at_least_32_bytes
 ```
+
+`prod` 프로필에서는 `JWT_SECRET`이 필수이며 UTF-8 기준 32바이트 이상이어야 합니다. 누락되거나 너무 짧으면 서버가 시작되지 않습니다.
 
 ### Backend
 ```bash
