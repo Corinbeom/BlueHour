@@ -57,6 +57,8 @@ management:
       enabled: false
 
 bluehour:
+  jwt:
+    secret: ${JWT_SECRET}
   storage:
     s3:
       endpoint: ${SUPABASE_S3_ENDPOINT}

@@ -14,6 +14,8 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
+    private static final int MIN_SECRET_BYTES = 32;
+
     private final SecretKey key;
     private final long expiryMillis;
 
@@ -21,6 +23,12 @@ public class JwtTokenProvider {
             @Value("${bluehour.jwt.secret}") String secret,
             @Value("${bluehour.jwt.expiry-hours}") int expiryHours
     ) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("JWT secret은 필수입니다.");
+        }
+        if (secret.getBytes(StandardCharsets.UTF_8).length < MIN_SECRET_BYTES) {
+            throw new IllegalStateException("JWT secret은 최소 32바이트여야 합니다.");
+        }
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expiryMillis = (long) expiryHours * 3600 * 1000;
     }

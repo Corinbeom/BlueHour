@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JwtTokenProviderTest {
 
@@ -80,5 +81,21 @@ class JwtTokenProviderTest {
         assertThat(sut.isValid(null)).isFalse();
         assertThat(sut.isValid("")).isFalse();
         assertThat(sut.isValid("   ")).isFalse();
+    }
+
+    @Test
+    @DisplayName("생성자 → 빈 secret 거부")
+    void constructor_빈_secret_거부() {
+        assertThatThrownBy(() -> new JwtTokenProvider(" ", EXPIRY_HOURS))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("JWT secret은 필수입니다.");
+    }
+
+    @Test
+    @DisplayName("생성자 → 32바이트 미만 secret 거부")
+    void constructor_짧은_secret_거부() {
+        assertThatThrownBy(() -> new JwtTokenProvider("too-short", EXPIRY_HOURS))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("JWT secret은 최소 32바이트여야 합니다.");
     }
 }
