@@ -67,6 +67,7 @@ class GeminiAssistantAdapterTest {
         assertThat(body.at("/contents/1/role").asText()).isEqualTo("model");
         assertThat(body.at("/contents/2/role").asText()).isEqualTo("user");
         assertThat(body.at("/systemInstruction/parts/0/text").asText()).contains("[데이터]");
+        assertThat(body.at("/generationConfig/temperature").isMissingNode()).isTrue();
     }
 
     @Test
