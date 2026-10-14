@@ -13,7 +13,7 @@
 ### AI 면접 준비
 이력서·포트폴리오를 업로드하면 포지션에 맞는 면접 질문을 자동 생성하고, 답변에 대한 AI 피드백을 받을 수 있습니다.
 
-- PDF/Text 파일 파싱 후 Gemini 2.5-flash 기반 질문 생성
+- PDF/Text 파일 파싱 후 Gemini 3.5 Flash-Lite 기반 질문 생성
 - 포지션별 특화 프롬프트 (BE, FE, iOS, Android, DE, Infra, PM, QA)
 - 답변 제출 시 강점·개선점·AI 모범 답안·후속 질문 제공
 - 세션 완료 후 종합 리포트 (점수, 역량 갭 분석)
@@ -37,7 +37,7 @@
 |---|---|
 | Frontend | Next.js 16, React 19, TypeScript 5, Tailwind CSS 4, TanStack Query 5 |
 | Backend | Spring Boot 3.2, Java 17, Spring Data JPA, Spring Security |
-| AI | Google Gemini 2.5-flash (기본), Groq (fallback) |
+| AI | Google Gemini 3.5 Flash-Lite (질문·리포트), Groq GPT-OSS 120B (피드백), Groq Whisper Large V3 Turbo (음성 인식) |
 | 인증 | OAuth2 (Google, Kakao) + JWT httpOnly Cookie |
 | DB | PostgreSQL (Neon) / H2 (dev) |
 | 캐싱 | Redis |

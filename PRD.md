@@ -122,7 +122,7 @@
 | 프레임워크 | Spring Boot 3.2, Java 17 |
 | ORM | Spring Data JPA (Hibernate) |
 | 인증 | Spring Security + OAuth2 Client + JJWT |
-| AI | Google Gemini 2.5-flash (기본) + Groq (fallback) |
+| AI | Google Gemini 3.5 Flash-Lite (질문·리포트) + Groq GPT-OSS 120B (피드백) |
 | 문서화 | SpringDoc OpenAPI (Swagger UI) |
 | 테스트 | JUnit 5, Mockito, AssertJ |
 

@@ -51,7 +51,7 @@ public class GeminiInterviewAiAdapter implements InterviewAiPort, CsQuizAiPort, 
             ObjectMapper objectMapper,
             AiMetrics aiMetrics,
             @Value("${bluehour.gemini.api-key:}") String apiKey,
-            @Value("${bluehour.gemini.model:gemini-2.5-flash}") String model,
+            @Value("${bluehour.gemini.model:gemini-3.5-flash-lite}") String model,
             @Value("${bluehour.gemini.base-url:https://generativelanguage.googleapis.com}") String baseUrl,
             @Value("${bluehour.gemini.request-timeout-seconds:90}") int requestTimeoutSeconds,
             @Value("${bluehour.gemini.max-output-tokens:8192}") int maxOutputTokens
@@ -411,7 +411,6 @@ public class GeminiInterviewAiAdapter implements InterviewAiPort, CsQuizAiPort, 
         body.put("systemInstruction", systemInstruction(systemInstruction));
         body.put("contents", contents);
         body.put("generationConfig", Map.of(
-                "temperature", 0.7,
                 "maxOutputTokens", Math.max(256, maxOutputTokensForRequest),
                 "responseMimeType", "application/json",
                 "responseSchema", responseSchema
@@ -720,7 +719,6 @@ public class GeminiInterviewAiAdapter implements InterviewAiPort, CsQuizAiPort, 
         body.put("systemInstruction", systemInstruction(systemInstruction));
         body.put("contents", List.of(content("user", userPrompt)));
         body.put("generationConfig", Map.of(
-                "temperature", 0.2,
                 "maxOutputTokens", Math.max(256, maxOutputTokensForRequest),
                 "responseMimeType", "application/json",
                 "responseSchema", responseSchema

@@ -56,7 +56,7 @@ public class GroqInterviewAiAdapter implements InterviewAiPort, CsQuizAiPort, Co
             ObjectMapper objectMapper,
             AiMetrics aiMetrics,
             @Value("${bluehour.groq.api-key:}") String apiKey,
-            @Value("${bluehour.groq.model:llama-3.3-70b-versatile}") String model,
+            @Value("${bluehour.groq.model:openai/gpt-oss-120b}") String model,
             @Value("${bluehour.groq.base-url:https://api.groq.com}") String baseUrl,
             @Value("${bluehour.groq.request-timeout-seconds:60}") int requestTimeoutSeconds,
             @Value("${bluehour.groq.max-output-tokens:4096}") int maxOutputTokens

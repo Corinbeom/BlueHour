@@ -37,7 +37,7 @@ public class GeminiAssistantAdapter implements AssistantAiPort {
     public GeminiAssistantAdapter(
             ObjectMapper objectMapper,
             @Value("${bluehour.gemini.api-key:}") String apiKey,
-            @Value("${bluehour.gemini.model:gemini-2.5-flash}") String model,
+            @Value("${bluehour.gemini.model:gemini-3.5-flash-lite}") String model,
             @Value("${bluehour.gemini.base-url:https://generativelanguage.googleapis.com}") String baseUrl,
             @Value("${bluehour.gemini.request-timeout-seconds:90}") int requestTimeoutSeconds,
             @Value("${bluehour.gemini.max-output-tokens:8192}") int maxOutputTokens
@@ -62,7 +62,6 @@ public class GeminiAssistantAdapter implements AssistantAiPort {
         body.put("systemInstruction", systemInstruction(AssistantPromptBuilder.buildSystemPrompt(context)));
         body.put("contents", contents(message, history));
         body.put("generationConfig", Map.of(
-                "temperature", 0.7,
                 "maxOutputTokens", Math.min(maxOutputTokens, 2048)
         ));
 

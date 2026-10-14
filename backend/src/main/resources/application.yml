@@ -89,14 +89,14 @@ bluehour:
 
   gemini:
     api-key: ${GEMINI_API_KEY:}
-    model: gemini-3.1-flash-lite-preview
+    model: gemini-3.5-flash-lite
     base-url: https://generativelanguage.googleapis.com
     request-timeout-seconds: 90
     max-output-tokens: 8192
 
   groq:
     api-key: ${GROQ_API_KEY:}
-    model: llama-3.3-70b-versatile
+    model: openai/gpt-oss-120b
     base-url: https://api.groq.com
     request-timeout-seconds: 60
     max-output-tokens: 4096
